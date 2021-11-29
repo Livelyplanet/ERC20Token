@@ -1,1 +1,3 @@
-# LivelyTokenERC20
+# Lively ERC20 Token
+
+
