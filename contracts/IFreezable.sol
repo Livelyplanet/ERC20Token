@@ -97,7 +97,7 @@ interface IFreezable {
      * `amount` add to the freeze account and subtracted from balance of account.
      */
     event FreezeFrom(
-        address indexed from, 
+        address indexed sender, 
         address indexed account, 
         uint256 oldFreeze,
         uint256 amount
@@ -109,7 +109,7 @@ interface IFreezable {
      * `amount` subtracted from the freeze account and add to balance of account.
      */
     event UnfreezeFrom(
-        address indexed from, 
+        address indexed sender, 
         address indexed account, 
         uint256 oldFreeze, 
         uint256 amount

@@ -10,15 +10,21 @@ import "./AccessControl.sol";
 import "./Pausable.sol";
 import "./Wallet.sol";
 
-
 /**
  * @dev Implementation of the {IERC20, IERC20Sec} interfaces.
  */
-contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable, 
-    AccessControl, Pausable, Wallet
+contract LivelyToken is
+    IERC20,
+    IERC20Sec,
+    IFreezable,
+    IBurnable,
+    IMintable,
+    AccessControl,
+    Pausable,
+    Wallet
 {
     mapping(address => uint256) private _balances;
-    
+
     mapping(address => mapping(address => uint256)) private _allowances;
 
     mapping(address => uint256) private _freezes;
@@ -27,12 +33,31 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
     string private _name;
     string private _symbol;
 
+    /**
+     * @dev error IllegalArgumentError
+     */
     error IllegalArgumentError();
+
+    /**
+     * @dev error IllegalBalanceError
+     */
     error IllegalBalanceError();
+
+    /**
+     * @dev error IllegalTotalSupplyError
+     */
     error IllegalTotalSupplyError();
+
+    /**
+     * @dev error IllegalAllowanceError
+     */
     error IllegalAllowanceError();
+
+    /**
+     * @dev error IllegalWalletAddressError
+     */
     error IllegalWalletAddressError();
-    
+
     /**
      * @dev Sets the values for {name} and {symbol}.
      *
@@ -46,25 +71,26 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
         _name = "Lively";
         _symbol = "LVL";
         _totalSupply = 1_000_000_000;
-        _balances[PUBLIC_SALE_WALLET_ADDRESS] = 500_000_000;            // equivalent 50% total supply 
-        _balances[FOUNDING_TEAM_WALLET_ADDRESS] = 200_000_000;          // equivalent 20% total supply
-        _balances[RESERVES_WALLET_ADDRESS] = 100_000_000;               // equivalent 10% total supply
+        _balances[PUBLIC_SALE_WALLET_ADDRESS] = 500_000_000; // equivalent 50% total supply
+        _balances[FOUNDING_TEAM_WALLET_ADDRESS] = 200_000_000; // equivalent 20% total supply
+        _balances[RESERVES_WALLET_ADDRESS] = 100_000_000; // equivalent 10% total supply
         _balances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS] = 80_000_000; // equivalent 8% total supply
-        _balances[BOUNTY_PROGRAMS_WALLET_ADDRESS] = 70_000_000;         // equivalent 7% total supply
-        _balances[CHARITY_WALLET_ADDRESS] = 50_000_000;                 // equivalent 5% total supply
+        _balances[BOUNTY_PROGRAMS_WALLET_ADDRESS] = 70_000_000; // equivalent 7% total supply
+        _balances[CHARITY_WALLET_ADDRESS] = 50_000_000; // equivalent 5% total supply
     }
 
-     /**
+    /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) 
-        public 
-        view 
-        virtual 
-        override(AccessControl, Pausable, Wallet) 
-        returns (bool) 
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControl, Pausable, Wallet)
+        returns (bool)
     {
-        return interfaceId == type(IERC20).interfaceId || 
+        return
+            interfaceId == type(IERC20).interfaceId ||
             interfaceId == type(IERC20Sec).interfaceId ||
             interfaceId == type(IBurnable).interfaceId ||
             interfaceId == type(IMintable).interfaceId ||
@@ -115,15 +141,19 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account) external view override returns (uint256) {
+    function balanceOf(address account)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _balances[account];
     }
 
-
-     /**
+    /**
      * @dev See {IFreezable-freezeOf}.
      */
-     // TODO test for address(0x0)
+    // TODO test for address(0x0)
     function freezeOf(address account) external view returns (uint256) {
         return _freezes[account];
     }
@@ -131,12 +161,12 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
     /**
      * @dev See {IFreezable-freeze}.
      */
-    function freeze(uint256 currentFreezeBalance, uint256 amount) 
+    function freeze(uint256 currentFreezeBalance, uint256 amount)
         external
         override
         whenNotPaused
         whenNotPausedOf(msg.sender)
-        returns (uint256 newFreezeBalance) 
+        returns (uint256 newFreezeBalance)
     {
         newFreezeBalance = _freeze(msg.sender, currentFreezeBalance, amount);
         emit Freeze(msg.sender, currentFreezeBalance, amount);
@@ -146,14 +176,14 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
     /**
      * @dev See {IFreezable-unfreeze}.
      */
-    function unfreeze(uint256 currentFreezeBalance, uint256 amount) 
+    function unfreeze(uint256 currentFreezeBalance, uint256 amount)
         external
         override
         whenNotPaused
         whenNotPausedOf(msg.sender)
-        returns (uint256 newFreezeBalance) 
-    {        
-        newFreezeBalance = _unfreezeFrom(msg.sender, currentFreezeBalance, amount);
+        returns (uint256 newFreezeBalance)
+    {
+        newFreezeBalance = _unfreeze(msg.sender, currentFreezeBalance, amount);
         emit Unfreeze(msg.sender, currentFreezeBalance, amount);
         return newFreezeBalance;
     }
@@ -161,14 +191,18 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
     /**
      * @dev See {IFreezable-freezeFrom}.
      */
-    function freezeFrom(address account, uint256 currentFreezeBalance, uint256 amount) 
+    function freezeFrom(
+        address account,
+        uint256 currentFreezeBalance,
+        uint256 amount
+    )
         external
         override
         whenNotPaused
         whenNotPausedOf(account)
-        onlyRoles(CONSENSUS_ROLE, ADMIN_ROLE)
+        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE)
         validateAddress(account)
-        returns (uint256 newFreezeBalance) 
+        returns (uint256 newFreezeBalance)
     {
         newFreezeBalance = _freeze(account, currentFreezeBalance, amount);
         emit FreezeFrom(msg.sender, account, currentFreezeBalance, amount);
@@ -178,20 +212,23 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
     /**
      * @dev See {IFreezable-unfreezeFrom}.
      */
-    function unfreezeFrom(address account, uint256 currentFreezeBalance, uint256 amount)
+    function unfreezeFrom(
+        address account,
+        uint256 currentFreezeBalance,
+        uint256 amount
+    )
         external
         override
         whenNotPaused
         whenNotPausedOf(account)
-        onlyRoles(CONSENSUS_ROLE, ADMIN_ROLE)
-        validateAddress(account) 
+        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE)
+        validateAddress(account)
         returns (uint256 newFreezeBalance)
-    {        
-        newFreezeBalance = _unfreezeFrom(account, currentFreezeBalance, amount);
+    {
+        newFreezeBalance = _unfreeze(account, currentFreezeBalance, amount);
         emit UnfreezeFrom(msg.sender, account, currentFreezeBalance, amount);
         return newFreezeBalance;
-    }        
-
+    }
 
     /**
      * @dev See {IERC20-transfer}.
@@ -201,82 +238,97 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount) 
-        public 
+    function transfer(address recipient, uint256 amount)
+        public
         override
         whenNotPaused
-        whenNotPausedOf(msg.sender)
-        whenNotPausedOf(recipient)
+        whenNotAccountsPausedOf(msg.sender, recipient)
         forbiddenAnyRole(msg.sender)
-        returns (bool) 
+        returns (bool)
     {
-        // TODO check it in test
-        if (_wallets[msg.sender].name != 0) revert ForbiddenError(msg.sender);
         _transfer(msg.sender, recipient, amount);
+        emit Transfer(msg.sender, recipient, amount);
         return true;
     }
 
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender) 
-        public 
-        view 
-        override 
-        returns (uint256) 
+    function allowance(address owner, address spender)
+        public
+        view
+        override
+        returns (uint256)
     {
         return _allowances[owner][spender];
     }
 
+    /**
+     * @dev See {IWallet-approveFromWallet} 
+     */
     function approveFromWallet(
-        address walletAccount, 
-        address spender, 
-        uint256 currentAllowance, 
+        address walletAccount,
+        address spender,
+        uint256 currentAllowance,
         uint256 amount
-    ) 
-        external 
+    )
+        external
         override
-        onlyRoles(CONSENSUS_ROLE, ADMIN_ROLE)
+        whenNotPaused
+        whenNotPausedOf(walletAccount)
+        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE)
         returns (bool)
     {
         WalletInfo storage walletInfo = _wallets[walletAccount];
-        if(walletInfo.name != 0) revert IllegalWalletAddressError();
-        Role memory role = _getRole(msg.sender);
-        if (role.name != CONSENSUS_ROLE && walletInfo.role != ADMIN_ROLE) revert UnauthorizedError(msg.sender);
+        if (walletInfo.name != 0) revert IllegalWalletAddressError();
+        Role storage role = _getRole(msg.sender);
+        if (role.name == ADMIN_ROLE && walletInfo.role != ADMIN_ROLE)
+            revert UnauthorizedError(msg.sender);
 
         uint256 currentAllowanceAccount = _allowances[walletAccount][spender];
-        if (currentAllowanceAccount != currentAllowance) revert IllegalAllowanceError();  
+        if (currentAllowanceAccount != currentAllowance)
+            revert IllegalAllowanceError();
         _allowances[walletAccount][spender] = amount;
-        
-        emit ApprovalFromWallet(walletAccount, spender, currentAllowanceAccount, amount);
+
+        emit ApprovalFromWallet(
+            walletAccount,
+            spender,
+            currentAllowanceAccount,
+            amount
+        );
         return true;
     }
 
+    /**
+     * @dev  See {IWallet-transferFromWallet} 
+     */
     function transferFromWallet(
         address walletAccount,
         address recipient,
         uint256 amount
-    ) 
-        external 
-        onlyRoles(CONSENSUS_ROLE, ADMIN_ROLE)
-        returns (bool) 
+    )
+        external
+        whenNotPaused
+        whenNotAccountsPausedOf(walletAccount, recipient)
+        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE)
+        returns (bool)
     {
         WalletInfo storage walletInfo = _wallets[walletAccount];
-        if(walletInfo.name != 0) revert IllegalWalletAddressError();
-        Role memory role = _getRole(msg.sender);
-        if (role.name != CONSENSUS_ROLE && walletInfo.role != ADMIN_ROLE) 
+        if (walletInfo.name != 0) revert IllegalWalletAddressError();
+        Role storage role = _getRole(msg.sender);
+        if (role.name == ADMIN_ROLE && walletInfo.role != ADMIN_ROLE)
             revert UnauthorizedError(msg.sender);
 
-        uint256 senderBalance = _balances[walletAccount];
-        if (senderBalance < amount) revert IllegalBalanceError();
+        uint256 walletBalance = _balances[walletAccount];
+        if (walletBalance < amount) revert IllegalBalanceError();
 
         unchecked {
-            _balances[walletAccount] = senderBalance - amount;
+            _balances[walletAccount] = walletBalance - amount;
         }
-        
+
         _balances[recipient] += amount;
         emit TransferFromWallet(msg.sender, walletAccount, recipient, amount);
-        return true;       
+        return true;
     }
 
     /**
@@ -286,12 +338,11 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) 
-        public 
-        override         
+    function approve(address spender, uint256 amount)
+        public
+        override
         whenNotPaused
         whenNotPausedOf(msg.sender)
-        whenNotPausedOf(spender)
         forbiddenAnyRole(msg.sender)
         returns (bool)
     {
@@ -301,15 +352,45 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
 
     /**
      * @dev See {IERC20-transferFrom}.
-     */     
-    function transferFrom(address sender, address recipient, uint256 amount)   
-        external 
-        override 
+     */
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    )
+        external
+        override
         whenNotPaused
-        whenNotPausedOf(sender)
-        whenNotPausedOf(recipient)
+        whenNotAccountsPausedOf(sender, recipient)
         forbiddenAnyRole(msg.sender)
-        returns (bool) 
+        returns (bool)
+    {
+        _transfer(sender, recipient, amount);
+
+        uint256 currentAllowance = _allowances[sender][msg.sender];
+        if (currentAllowance < amount) revert IllegalAllowanceError();
+        unchecked {
+            _approve(sender, msg.sender, currentAllowance - amount);
+        }
+
+        emit Transfer(sender, recipient, amount);
+        return true;
+    }
+
+     /**
+     * @dev See {IERC20Sec-transferFromSec}.
+     */
+    function transferFromSec(
+        address sender,
+        address recipient,
+        uint256 amount
+    )
+        external
+        override
+        whenNotPaused
+        whenNotAccountsPausedOf(sender, recipient)
+        forbiddenAnyRole(msg.sender)
+        returns (bool)
     {
         _transfer(sender, recipient, amount);
 
@@ -326,17 +407,21 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
     /**
      * @dev See {IERC20Sec-approveSec}.
      */
-    function approveSec(address spender, uint256 currentAllowance, uint256 amount) 
+    function approveSec(
+        address spender,
+        uint256 currentAllowance,
+        uint256 amount
+    )
         external
         override
         whenNotPaused
-        whenNotPausedOf(msg.sender)
-        whenNotPausedOf(spender)
+        whenNotAccountsPausedOf(msg.sender, spender)
         forbiddenAnyRole(msg.sender)
-        returns (bool success) 
+        returns (bool success)
     {
         uint256 currentAllowanceAccount = _allowances[msg.sender][spender];
-        if (currentAllowanceAccount != currentAllowance) revert IllegalAllowanceError();  
+        if (currentAllowanceAccount != currentAllowance)
+            revert IllegalAllowanceError();
         _allowances[msg.sender][spender] = amount;
 
         emit ApprovalSec(msg.sender, spender, currentAllowanceAccount, amount);
@@ -350,15 +435,16 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
         address spender,
         uint256 currentAllowance,
         uint256 value
-    ) 
+    )
         external
         whenNotPaused
         whenNotPausedOf(msg.sender)
-        whenNotPausedOf(spender)
-        returns (bool) 
+        forbiddenAnyRole(msg.sender)
+        returns (bool)
     {
         uint256 currentAllowanceAccount = _allowances[msg.sender][spender];
-        if (currentAllowanceAccount != currentAllowance) revert IllegalAllowanceError();  
+        if (currentAllowanceAccount != currentAllowance)
+            revert IllegalAllowanceError();
         _allowances[msg.sender][spender] = currentAllowanceAccount + value;
 
         emit ApprovalSec(msg.sender, spender, currentAllowanceAccount, value);
@@ -368,16 +454,21 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
     /**
      * @dev See {IERC20Sec-decreaseAllowanceSec}.
      */
-    function decreaseAllowanceSec(address spender, uint256 currentAllowance, uint256 value) 
-        external 
+    function decreaseAllowanceSec(
+        address spender,
+        uint256 currentAllowance,
+        uint256 value
+    )
+        external
         whenNotPaused
         whenNotPausedOf(msg.sender)
-        whenNotPausedOf(spender) 
-        returns (bool) 
+        forbiddenAnyRole(msg.sender)
+        returns (bool)
     {
         uint256 currentAllowanceAccount = _allowances[msg.sender][spender];
-        if(currentAllowanceAccount < value) revert IllegalArgumentError();
-        if(currentAllowanceAccount != currentAllowance) revert IllegalAllowanceError(); 
+        if (currentAllowanceAccount < value) revert IllegalArgumentError();
+        if (currentAllowanceAccount != currentAllowance)
+            revert IllegalAllowanceError();
         unchecked {
             _allowances[msg.sender][spender] = currentAllowanceAccount - value;
         }
@@ -395,86 +486,48 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
      *
      * - the caller must have the `MINTER_ROLE`.
      */
-    function mint(address account, uint256 amount) 
+    function mint(
+        address account,
+        uint256 currentAccountBalance,
+        uint256 currentTotalSupply,
+        uint256 amount
+    )
         external
         override
         whenPaused
-        onlyRole(CONSENSUS_ROLE)
+        validateSenderRole(CONSENSUS_ROLE)
         validateAddress(account)
     {
+        if (_balances[account] != currentAccountBalance)
+            revert IllegalBalanceError();
+        if (_totalSupply != currentTotalSupply)
+            revert IllegalTotalSupplyError();
         _totalSupply += amount;
         _balances[account] += amount;
         emit Mint(msg.sender, account, amount);
     }
 
-    // /** @dev Creates `amount` tokens and assigns them to `account`, increasing
-    //  * the total supply.
-    //  *
-    //  * Emits a {Transfer} event with `from` set to the zero address.
-    //  *
-    //  * Requirements:
-    //  *
-    //  * - `account` cannot be the zero address.
-    //  */
-    // function _mint(address account, uint256 amount) internal virtual {
-    //     require(account != address(0), "ERC20: mint to the zero address");
-
-    //     _beforeTokenTransfer(address(0), account, amount);
-
-    //     _totalSupply += amount;
-    //     _balances[account] += amount;
-    //     emit Transfer(address(0), account, amount);
-
-    //     _afterTokenTransfer(address(0), account, amount);
-    // }
-
-    // TODO check ACL and Pause
-    // // TODO assert for totalSupply
-    // function burn(uint256 currentBalance, uint256 currentTotalSupply, uint256 amount) 
-    //     external
-    //     override
-    //     whenPaused
-    //     onlyRoles(CONSENSUS_ROLE, BURNABLE_ROLE) 
-    //     returns (uint256 newBalance, uint256 newTotalSupply)
-    // {
-    //     if(amount <= 0 || currentBalance < 0 || currentTotalSupply <=0) 
-    //         revert IllegalArgumentError();
-
-    //     if(totalSupply() != currentTotalSupply) revert IllegalTotalSupplyError();
-
-    //     uint256 accountBalance = _balances[msg.sender];
-    //     if(accountBalance != currentBalance) revert IllegalBalanceError();
-    //     if(accountBalance < amount) revert IllegalArgumentError();
-        
-    //     unchecked {
-    //         newBalance = accountBalance - amount;
-    //     }
-
-    //     _balances[msg.sender] = newBalance;
-    //     _totalSupply -= amount;
-
-    //     emit Burn(msg.sender, currentBalance, currentTotalSupply, amount);
-    // }        
-
- function burnFrom(
-        address account, 
-        uint256 currentBalance, 
-        uint256 currentTotalSupply, 
+    function burnFrom(
+        address account,
+        uint256 currentBalance,
+        uint256 currentTotalSupply,
         uint256 amount
-    ) 
+    )
         external
         override
         whenPaused
-        onlyRoles(CONSENSUS_ROLE, BURNABLE_ROLE)  
+        validateSenderRoles(CONSENSUS_ROLE, BURNABLE_ROLE)
         validateAddress(account)
-        returns (uint256 newBalance, uint256)     
+        returns (uint256 newBalance, uint256)
     {
-        if(_totalSupply != currentTotalSupply) revert IllegalTotalSupplyError();
+        if (_totalSupply != currentTotalSupply)
+            revert IllegalTotalSupplyError();
 
         uint256 currentAccountBalance = _balances[account];
-        if(currentAccountBalance != currentBalance) revert IllegalBalanceError();
-        if(currentAccountBalance < amount) revert IllegalArgumentError();
-        
+        if (currentAccountBalance != currentBalance)
+            revert IllegalBalanceError();
+        if (currentAccountBalance < amount) revert IllegalArgumentError();
+
         unchecked {
             newBalance = currentAccountBalance - amount;
         }
@@ -482,38 +535,15 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
         _balances[account] = newBalance;
         _totalSupply -= amount;
 
-        emit BurnFrom(msg.sender, account, currentBalance, currentTotalSupply, amount);
+        emit BurnFrom(
+            msg.sender,
+            account,
+            currentBalance,
+            currentTotalSupply,
+            amount
+        );
         return (newBalance, _totalSupply);
     }
-
-    /**
-     * @dev Destroys `amount` tokens from `account`, reducing the
-     * total supply.
-     *
-     * Emits a {Transfer} event with `to` set to the zero address.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
-     * - `account` must have at least `amount` tokens.
-     */
-    // function _burn(address account, uint256 amount) internal virtual {
-    //     require(account != address(0), "ERC20: burn from the zero address");
-
-    //     _beforeTokenTransfer(account, address(0), amount);
-
-    //     uint256 accountBalance = _balances[account];
-    //     require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
-    //     unchecked {
-    //         _balances[account] = accountBalance - amount;
-    //     }
-    //     _totalSupply -= amount;
-
-    //     emit Transfer(account, address(0), amount);
-
-    //     _afterTokenTransfer(account, address(0), amount);
-    // }
-
 
     /**
      * @dev Moves `amount` of tokens from `sender` to `recipient`.
@@ -529,22 +559,17 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
      * - `recipient` cannot be the zero address.
      * - `sender` must have a balance of at least `amount`.
      */
-    function _transfer(address sender, address recipient, uint256 amount) 
-        internal         
-        validateAddresses(sender, recipient)
-    {
-        // _beforeTokenTransfer(sender, recipient, amount);
-
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal validateAddresses(sender, recipient) {
         uint256 senderBalance = _balances[sender];
         if (senderBalance < amount) revert IllegalBalanceError();
         unchecked {
             _balances[sender] = senderBalance - amount;
         }
         _balances[recipient] += amount;
-
-        emit Transfer(sender, recipient, amount);
-
-        // _afterTokenTransfer(sender, recipient, amount);
     }
 
     /**
@@ -560,10 +585,11 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
      * - `owner` cannot be the zero address.
      * - `spender` cannot be the zero address.
      */
-    function _approve(address owner, address spender, uint256 amount) 
-        internal
-        validateAddresses(owner, spender)
-    {
+    function _approve(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal validateAddresses(owner, spender) {
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
@@ -571,13 +597,14 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
     /**
      * @dev Sets `amount` as the freeze(stake) of `account`.
      */
-    function _freeze(address account, uint256 currentFreezeBalance, uint256 amount) 
-        internal 
-        returns (uint256 newFreezeBalance)
-    {
+    function _freeze(
+        address account,
+        uint256 currentFreezeBalance,
+        uint256 amount
+    ) internal returns (uint256 newFreezeBalance) {
         uint256 currentBalance = _balances[account];
         if (currentBalance < amount) revert IllegalArgumentError();
-        
+
         uint256 currentFreeze = _freezes[account];
         if (currentFreezeBalance != currentFreeze) revert IllegalBalanceError();
 
@@ -590,19 +617,19 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
         return newFreezeBalance;
     }
 
-     /**
+    /**
      * @dev Unfreeze `amount` of `account`.
      */
-    function _unfreezeFrom(address account, uint256 currentFreezeBalance, uint256 amount)
-        internal
-        returns (uint256 newFreezeBalance) 
-    {
+    function _unfreeze(
+        address account,
+        uint256 currentFreezeBalance,
+        uint256 amount
+    ) internal returns (uint256 newFreezeBalance) {
         uint256 currentFreeze = _freezes[account];
-        if(currentFreeze < amount) revert IllegalArgumentError();
-        if(currentFreezeBalance != currentFreeze) revert IllegalBalanceError();
+        if (currentFreeze < amount) revert IllegalArgumentError();
+        if (currentFreezeBalance != currentFreeze) revert IllegalBalanceError();
 
-        uint256 currentAccountBalance = _balances[account];
-        _balances[account] = currentAccountBalance + amount;
+        _balances[account] += amount;
 
         unchecked {
             newFreezeBalance = currentFreeze - amount;
@@ -612,8 +639,11 @@ contract LivelyToken is IERC20, IERC20Sec, IFreezable, IBurnable, IMintable,
         return newFreezeBalance;
     }
 
-    // experimental 
-    function withdrawContractBalance(address recepient) external onlyRole(CONSENSUS_ROLE) {
+    // experimental
+    function withdrawContractBalance(address recepient)
+        external
+        validateSenderRole(CONSENSUS_ROLE)
+    {
         payable(recepient).transfer(address(this).balance);
     }
 

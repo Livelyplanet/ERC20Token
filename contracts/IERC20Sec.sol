@@ -66,6 +66,21 @@ interface IERC20Sec {
 
 
     /**
+     * @dev Moves `amount` tokens from `sender` to `recipient` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {TransferFromSec} event.
+     */
+    function transferFromSec(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
+    /**
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by
      * a call to {approve}. 
      * `value` is the new allowance and `oldValue` is the old allowance.

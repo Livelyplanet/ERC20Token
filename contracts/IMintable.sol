@@ -14,7 +14,12 @@ interface IMintable {
      * - `account` cannot be the zero address.
      * - `account` cannot be the contract address.
      */
-    function mint(address account, uint256 amount) external;
+    function mint(
+        address account, 
+        uint256 currentAccountBalance, 
+        uint256 currentTotalSupply, 
+        uint256 amount
+    ) external;
 
     /**
      * @dev Emitted when the mint of a `amount` for an `account` is set by

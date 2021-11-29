@@ -4,7 +4,8 @@ pragma solidity 0.8.10;
 interface IWallet {
 
     /**
-     * @dev Sets `amount` as the allowance of `spender` over walletAccount by the ADMIN ro CONSENSUS roles.
+     * @dev Sets `amount` as the allowance of `spender` 
+     * over walletAccount by the ADMIN ro CONSENSUS roles.
      *
      * Returns a boolean value indicating whether the operation succeeded.
      *

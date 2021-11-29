@@ -8,26 +8,12 @@ import "./ERC165.sol";
  * @dev Roles are referred to by their `bytes32` identifier. These should be exposed
  * in the external API and be unique. The best way to achieve this is by
  * using `public constant` hash digests:
- *
- * ```
- * bytes32 public constant MY_ROLE = keccak256("MY_ROLE");
- * ```
- *
- * Roles can be used to represent a set of permissions. To restrict access to a
- * function call, use {hasRole}:
- *
- * ```
- * function foo() public {
- *     require(hasRole(MY_ROLE, msg.sender));
- *     ...
- * }
- * ```
- *
+ 
  * Roles can be granted and revoked dynamically via the {grantRole} and
- * {revokeRole} functions. Only account that have a role's admin role 
+ * {revokeRole} functions. Only account that have a role's consensus role 
  * can call {grantRole} and {revokeRole}.
  *
- * By default, the admin role for all roles is `CONSENSUS_ROLE`, which means
+ * By default, the admin role is `CONSENSUS_ROLE`, which means
  * that only account with this role will be able to grant or revoke other
  * roles.
  *
@@ -42,9 +28,8 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         bool isEnabled;
     }
 
-    bool private _firstInitConsensusRole;
+    bool private _isConsenusRoleInitialized;
     mapping(address => Role) private _roles;
-
 
     /**
      * @dev error Unauthorized, caller hasn't privilage access
@@ -56,7 +41,10 @@ abstract contract AccessControl is IAccessControl, ERC165 {
      */
     error ForbiddenError(address account);
 
-    error RoleAddressNotFound(address account);
+    /**
+     * @dev error AddressNotFoundError
+     */
+    error AddressNotFoundError(address account);
 
     /**
      * @dev error IllegalAddressError, caller destination account address is invalid
@@ -64,9 +52,9 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     error IllegalAddressError(address account);
 
     /**
-     * @dev error IllegalRevokeRole, Revoke role is invalid
+     * @dev error IllegalRoleError, Revoke role is invalid
      */
-    error RoleMatchError();
+    error IllegalRoleError();
 
     /**
      * @dev Grants `ADMIN_ROLE, `BURNABLE_ROLE` to the
@@ -76,29 +64,32 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         _setupRole(ADMIN_ROLE, msg.sender);
         // _setupRole(CONSENSUS_ROLE, msg.sender);
         _setupRole(BURNABLE_ROLE, msg.sender);
-        _firstInitConsensusRole = true;
+        _isConsenusRoleInitialized = false;
     }
 
-
     /**
-     * @dev Modifier that checks that an account has a specific role. Reverts
+     * @dev Modifier that checks that a sender has a specific role. Reverts
      * with a UnauthorizedError(address account).
      */
-    modifier onlyRole(bytes32 role) {
+    modifier validateSenderRole(bytes32 role) {
         if (!_checkRole(role, msg.sender)) revert UnauthorizedError(msg.sender);
         _;
     }
 
     /**
-     * @dev Modifier that checks that an account has a two specific roles. Reverts
+     * @dev Modifier that checks that a sender has a two specific roles. Reverts
      * with a UnauthorizedError(address account).
      */
-    modifier onlyRoles(bytes32 primaryRole, bytes32 secondaryRole) {
+    modifier validateSenderRoles(bytes32 primaryRole, bytes32 secondaryRole) {
         if (!_checkRole(primaryRole, msg.sender) && !_checkRole(secondaryRole, msg.sender)) 
             revert UnauthorizedError(msg.sender);
         _;
     }
 
+    /**
+     * @dev Modifier that checks that an account hasn't any roles. Reverts
+     * with a ForbiddenError(address account).
+     */
     modifier forbiddenAnyRole(address account) {
         if (_getRole(account).name != 0) revert ForbiddenError(account);
         _;
@@ -114,6 +105,10 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         _;
     }
 
+    /**
+     * @dev Modifier that checks that each of account must not equal with two specific addresses. 
+     * Reverts with a IllegalAddressError(address account).
+     */
     modifier validateAddresses(address account1, address account2) {
         if(account1 == address(0) || account1 == address(this))
             revert IllegalAddressError(account1);            
@@ -122,6 +117,10 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         _;            
     }
 
+    /**
+     * @dev Modifier that checks that a sender address not equal to zero. 
+     * Reverts with a IllegalAddressError(address account).
+     */
     modifier validateSenderAddress {
         assert(address(0) != msg.sender);
         _;
@@ -159,7 +158,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     function grantRole(bytes32 role, address currentAccount, address newAccount) 
         external  
         override 
-        onlyRole(CONSENSUS_ROLE)
+        validateSenderRole(CONSENSUS_ROLE)
         validateAddresses(currentAccount, newAccount)
     {
         _grantRole(role, currentAccount, newAccount);
@@ -174,7 +173,10 @@ abstract contract AccessControl is IAccessControl, ERC165 {
      *
      * - the caller must have ``role``'s CONSENSUS_ROLE role.
      */
-    function revokeRole(bytes32 role, address account) external override onlyRole(CONSENSUS_ROLE) {
+    function revokeRole(bytes32 role, address account) 
+        external 
+        override 
+        validateSenderRole(CONSENSUS_ROLE) {
         _revokeRole(role, account);
     }
 
@@ -189,12 +191,12 @@ abstract contract AccessControl is IAccessControl, ERC165 {
      */
     function firstInitializeConsensusRole(address account) 
         external 
-        onlyRole(ADMIN_ROLE)
+        validateSenderRole(ADMIN_ROLE)
         validateAddress(account)
     {
-        if (!_firstInitConsensusRole) revert ForbiddenError(msg.sender);
+        if (_isConsenusRoleInitialized) revert ForbiddenError(msg.sender);
         if (!_isContract(account)) revert IllegalAddressError(account);
-        _firstInitConsensusRole = false;
+        _isConsenusRoleInitialized = true;
         _grantRole(CONSENSUS_ROLE, msg.sender, account);
     }
 
@@ -210,10 +212,10 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     }
 
     /**
-     * @dev Returns true if _firstInitConsensusRole is false.
+     * @dev Returns true if _isConsenusRoleInitialized is true.
      */
     function _isConsensusRoleInitailized() internal view returns(bool) {
-        return !_firstInitConsensusRole;
+        return _isConsenusRoleInitialized;
     }
 
      /**
@@ -265,18 +267,17 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         _roles[account] = Role(role, true);
     }
 
-    // TODO check return value form map
-    function _getRole(address account) internal view returns (Role memory) {
+    
+    function _getRole(address account) internal view returns (Role storage) {
         return _roles[account];
     }
-
 
     // TODO check it update 
     function _grantRole(bytes32 role, address currentAccount, address newAccount) private {
         if(role == CONSENSUS_ROLE && !_isContract(newAccount)) revert IllegalAddressError(newAccount);
         Role memory roleInfo = _roles[currentAccount];
-        if(roleInfo.name == 0) revert RoleAddressNotFound(currentAccount);
-        if(roleInfo.name != role) revert RoleMatchError();
+        if(roleInfo.name == 0) revert AddressNotFoundError(currentAccount);
+        if(roleInfo.name != role) revert IllegalRoleError();
         roleInfo.isEnabled = true;
         delete _roles[currentAccount];
         _roles[newAccount] = roleInfo;
@@ -287,8 +288,12 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     function _revokeRole(bytes32 role, address currentAccount) private {
         if(role == CONSENSUS_ROLE) revert ForbiddenError(currentAccount);
         Role storage roleInfo = _roles[currentAccount];
-        if(roleInfo.name == 0) revert RoleAddressNotFound(currentAccount);
-        if(roleInfo.name != role) revert RoleMatchError();
+
+        if(roleInfo.name == 0) revert AddressNotFoundError(currentAccount);
+        if(roleInfo.name != role) revert IllegalRoleError();
+        if(roleInfo.name == ADMIN_ROLE && !_isConsensusRoleInitailized()) 
+            revert ForbiddenError(currentAccount);
+        
         roleInfo.isEnabled = false;
         // _roles[currentAccount] = roleInfo;
         emit RoleRevoked(role, msg.sender, currentAccount);
