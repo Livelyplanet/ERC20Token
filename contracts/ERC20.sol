@@ -281,8 +281,8 @@ contract LivelyToken is
     {
         WalletInfo storage walletInfo = _wallets[walletAccount];
         if (walletInfo.name != 0) revert IllegalWalletAddressError();
-        Role storage role = _getRole(msg.sender);
-        if (role.name == ADMIN_ROLE && walletInfo.role != ADMIN_ROLE)
+        bytes32 role = _getRole(msg.sender);
+        if (role == ADMIN_ROLE && walletInfo.role != ADMIN_ROLE)
             revert UnauthorizedError(msg.sender);
 
         uint256 currentAllowanceAccount = _allowances[walletAccount][spender];
@@ -315,8 +315,8 @@ contract LivelyToken is
     {
         WalletInfo storage walletInfo = _wallets[walletAccount];
         if (walletInfo.name != 0) revert IllegalWalletAddressError();
-        Role storage role = _getRole(msg.sender);
-        if (role.name == ADMIN_ROLE && walletInfo.role != ADMIN_ROLE)
+        bytes32 role = _getRole(msg.sender);
+        if (role == ADMIN_ROLE && walletInfo.role != ADMIN_ROLE)
             revert UnauthorizedError(msg.sender);
 
         uint256 walletBalance = _balances[walletAccount];

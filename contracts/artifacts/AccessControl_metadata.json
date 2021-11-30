@@ -1,0 +1,387 @@
+{
+	"compiler": {
+		"version": "0.8.10+commit.fc410830"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "AddressNotFoundError",
+				"type": "error"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "ForbiddenError",
+				"type": "error"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "IllegalAddressError",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "IllegalRoleError",
+				"type": "error"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "UnauthorizedError",
+				"type": "error"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newAccount",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "oldAccount",
+						"type": "address"
+					}
+				],
+				"name": "RoleGranted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "RoleRevoked",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "ADMIN_ROLE",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "BURNABLE_ROLE",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "CONSENSUS_ROLE",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "_roles",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "name",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bool",
+						"name": "isEnabled",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "firstInitializeConsensusRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "currentAccount",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "newAccount",
+						"type": "address"
+					}
+				],
+				"name": "grantRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "hasRole",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "revokeRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes4",
+						"name": "interfaceId",
+						"type": "bytes4"
+					}
+				],
+				"name": "supportsInterface",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"details": "Roles are referred to by their `bytes32` identifier. These should be exposed in the external API and be unique. The best way to achieve this is by using `public constant` hash digests: Roles can be granted and revoked dynamically via the {grantRole} and {revokeRole} functions. Only account that have a role's consensus role  can call {grantRole} and {revokeRole}. By default, the admin role is `CONSENSUS_ROLE`, which means that only account with this role will be able to grant or revoke other roles.",
+			"errors": {
+				"AddressNotFoundError(address)": [
+					{
+						"details": "error AddressNotFoundError"
+					}
+				],
+				"ForbiddenError(address)": [
+					{
+						"details": "error ForbiddenError, caller call method or action is forbidden "
+					}
+				],
+				"IllegalAddressError(address)": [
+					{
+						"details": "error IllegalAddressError, caller destination account address is invalid"
+					}
+				],
+				"IllegalRoleError()": [
+					{
+						"details": "error IllegalRoleError, Revoke role is invalid"
+					}
+				],
+				"UnauthorizedError(address)": [
+					{
+						"details": "error Unauthorized, caller hasn't privilage access"
+					}
+				]
+			},
+			"kind": "dev",
+			"methods": {
+				"constructor": {
+					"details": "Grants `ADMIN_ROLE, `BURNABLE_ROLE` to the account that deploys the contract."
+				},
+				"firstInitializeConsensusRole(address)": {
+					"details": "Grants `CONSENSUS_ROLE` to `contract account` by ADMIN_ROLE only once. [WARNING] ==== This function should only be called by ADMIN_ROLE when  setting up the CONSENSUS_ROLE for the system. ===="
+				},
+				"grantRole(bytes32,address,address)": {
+					"details": "Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s CONSENSUS_ROLE role."
+				},
+				"hasRole(bytes32,address)": {
+					"details": "Returns `true` if `account` has been granted `role`."
+				},
+				"revokeRole(bytes32,address)": {
+					"details": "Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s CONSENSUS_ROLE role."
+				},
+				"supportsInterface(bytes4)": {
+					"details": "See {IERC165-supportsInterface}."
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/AccessControl.sol": "AccessControl"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/AccessControl.sol": {
+			"keccak256": "0xdbf749e7a9eebe2d44c0869f0d4f8502b0fbe769a056f09de2792899320f210d",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://d95819cee57b4c8fe85fea74c56254916896540ff4f4bddd4c5ac17108f88213",
+				"dweb:/ipfs/QmZyM9J48Y8fwCAJGTPHc5jfVi8E8LWyM4GPQG8VAxcHLH"
+			]
+		},
+		"contracts/ERC165.sol": {
+			"keccak256": "0xaa23855717e11f8f6df4c1b856879a02989738e76373d0e2130144883f6ac101",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://36cd25ae5aaedbcfcce079dea61bb26bcd3000dde02374206f3c345d13488ebf",
+				"dweb:/ipfs/QmTFa9iPL6bhfVckYuVNEqfvV988jN97xTC3uxv4BXNFoW"
+			]
+		},
+		"contracts/IAccessControl.sol": {
+			"keccak256": "0x079fc61027418a8ccd6b1a6af985f8a263f61fdc75c50373288137b0eb2d07ac",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://19b43dca7d21389e73fc7d24cbad3fec7f5226d9ebdbdea003a183230bb594ab",
+				"dweb:/ipfs/QmXiKamdG5dExfq94KkYwrBDFnCvgasUkEtUHANcpTRUCd"
+			]
+		},
+		"contracts/IERC165.sol": {
+			"keccak256": "0x1b98b859412e82f023b029ce32547e3dfe0c0e756b4cfde86b3857f4686a6690",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://0af1f588378e6599adde810212c793e011b8d33d7d1a541e9317e1063d752f6b",
+				"dweb:/ipfs/Qmaism6stUsV4tu6cKf7UUVtQYBFNyCqarA3zkmGeKzbbm"
+			]
+		}
+	},
+	"version": 1
+}

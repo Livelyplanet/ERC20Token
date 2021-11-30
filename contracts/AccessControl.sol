@@ -23,13 +23,8 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     bytes32 public constant BURNABLE_ROLE = keccak256("BURNABLE_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    struct Role {
-        bytes32 name;
-        bool isEnabled;
-    }
-
     bool private _isConsenusRoleInitialized;
-    mapping(address => Role) private _roles;
+    mapping(address => bytes32) private _roles;
 
     /**
      * @dev error Unauthorized, caller hasn't privilage access
@@ -57,13 +52,16 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     error IllegalRoleError();
 
     /**
+     * @dev error DublicateAddressRoleError
+     */
+    error DublicateAddressRoleError();
+
+    /**
      * @dev Grants `ADMIN_ROLE, `BURNABLE_ROLE` to the
      * account that deploys the contract.
      */
     constructor() {
         _setupRole(ADMIN_ROLE, msg.sender);
-        // _setupRole(CONSENSUS_ROLE, msg.sender);
-        _setupRole(BURNABLE_ROLE, msg.sender);
         _isConsenusRoleInitialized = false;
     }
 
@@ -91,7 +89,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
      * with a ForbiddenError(address account).
      */
     modifier forbiddenAnyRole(address account) {
-        if (_getRole(account).name != 0) revert ForbiddenError(account);
+        if (_getRole(account) != 0) revert ForbiddenError(account);
         _;
     }
 
@@ -189,6 +187,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
      * setting up the CONSENSUS_ROLE for the system.
      * ====
      */
+
     function firstInitializeConsensusRole(address account) 
         external 
         validateSenderRole(ADMIN_ROLE)
@@ -201,14 +200,12 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     }
 
     /**
-     * @dev return false if `role` is missing account.
-     * // TODO GAS optimazation with subsitutude multiple if with sload
-     * // TODO check resutl struct map
+     * @dev return false if account hasn't any role.
      */
     function _checkRole(bytes32 role, address account) private view returns (bool) {
-        Role storage roleInfo = _roles[account];
-        if (roleInfo.name == 0) return false;
-        return roleInfo.name == role && roleInfo.isEnabled;
+        bytes32 roleInfo = _roles[account];
+        if (roleInfo == 0) return false;
+        return roleInfo == role;
     }
 
     /**
@@ -264,38 +261,39 @@ abstract contract AccessControl is IAccessControl, ERC165 {
      * ====
      */
     function _setupRole(bytes32 role, address account) internal {
-        _roles[account] = Role(role, true);
+        _roles[account] = role;
     }
 
     
-    function _getRole(address account) internal view returns (Role storage) {
+    function _getRole(address account) internal view returns (bytes32) {
         return _roles[account];
     }
 
     // TODO check it update 
     function _grantRole(bytes32 role, address currentAccount, address newAccount) private {
         if(role == CONSENSUS_ROLE && !_isContract(newAccount)) revert IllegalAddressError(newAccount);
-        Role memory roleInfo = _roles[currentAccount];
-        if(roleInfo.name == 0) revert AddressNotFoundError(currentAccount);
-        if(roleInfo.name != role) revert IllegalRoleError();
-        roleInfo.isEnabled = true;
+        if(_roles[newAccount] != 0) revert DublicateAddressRoleError();
+        
+        bytes32 roleInfo = _roles[currentAccount];
+        if(roleInfo == 0) revert AddressNotFoundError(currentAccount);
+        if(roleInfo != role) revert IllegalRoleError();
         delete _roles[currentAccount];
-        _roles[newAccount] = roleInfo;
+
+        _roles[newAccount] = role;
         emit RoleGranted(role, msg.sender, newAccount, currentAccount);
     }
 
     // TODO check it update 
     function _revokeRole(bytes32 role, address currentAccount) private {
         if(role == CONSENSUS_ROLE) revert ForbiddenError(currentAccount);
-        Role storage roleInfo = _roles[currentAccount];
+        bytes32 roleInfo = _roles[currentAccount];
 
-        if(roleInfo.name == 0) revert AddressNotFoundError(currentAccount);
-        if(roleInfo.name != role) revert IllegalRoleError();
-        if(roleInfo.name == ADMIN_ROLE && !_isConsensusRoleInitailized()) 
+        if(roleInfo == 0) revert AddressNotFoundError(currentAccount);
+        if(roleInfo != role) revert IllegalRoleError();
+        if(roleInfo == ADMIN_ROLE && !_isConsensusRoleInitailized()) 
             revert ForbiddenError(currentAccount);
         
-        roleInfo.isEnabled = false;
-        // _roles[currentAccount] = roleInfo;
+        delete _roles[currentAccount];
         emit RoleRevoked(role, msg.sender, currentAccount);
     }
 }
