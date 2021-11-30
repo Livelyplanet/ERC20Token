@@ -507,6 +507,9 @@ contract LivelyToken is
         emit Mint(msg.sender, account, amount);
     }
 
+    /**
+     * @dev See {IBurnable-burnFrom}.
+     */
     function burnFrom(
         address account,
         uint256 currentBalance,
