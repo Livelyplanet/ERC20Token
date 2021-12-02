@@ -91,7 +91,7 @@ contract LivelyToken is
         public
         view
         virtual
-        override(AccessControl, Pausable, Wallet)
+        override(AccessControl, Pausable)
         returns (bool)
     {
         return
@@ -283,43 +283,6 @@ contract LivelyToken is
         returns (uint256)
     {
         return _allowances[owner][spender];
-    }
-
-    /**
-     * @dev See {IWallet-approveFromWallet} 
-     */
-    function approveFromWallet(
-        address walletAccount,
-        address spender,
-        uint256 currentAllowance,
-        uint256 amount
-    )
-        external
-        override
-        whenNotPaused
-        whenNotPausedOf(walletAccount)
-        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE)
-        validateAddress(spender)
-        returns (bool)
-    {
-        WalletInfo storage walletInfo = _wallets[walletAccount];
-        if (walletInfo.name == 0) revert IllegalWalletAddressError();
-        bytes32 role = _getRole(msg.sender);
-        if (role == ADMIN_ROLE && walletInfo.role != ADMIN_ROLE)
-            revert UnauthorizedError(msg.sender);
-
-        uint256 currentAllowanceAccount = _allowances[walletAccount][spender];
-        if (currentAllowanceAccount != currentAllowance)
-            revert IllegalAllowanceError();
-        _allowances[walletAccount][spender] = amount;
-
-        emit ApprovalFromWallet(
-            walletAccount,
-            spender,
-            currentAllowanceAccount,
-            amount
-        );
-        return true;
     }
 
     /**

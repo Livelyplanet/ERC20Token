@@ -62,61 +62,44 @@ contract('Wallet', (accounts) => {
         assert.equal(result.toString(), balance.toString())
     })
 
-    it('Should ADMIN_ROLE approve from permited wallet to account', async() => {
+    it('Should CONSENSUS_ROLE transfer token from PUBLIC_SALE_WALLET to account', async() => {
         // given
-        let allowance = await lively.allowance(PUBLIC_SALE_WALLET, accounts[5]);
+        let allowance = await lively.allowance(PUBLIC_SALE_WALLET, accounts[1]);
+        let balance = await lively.balanceOf(accounts[5]);
 
         // when
-        await lively.approveFromWallet(PUBLIC_SALE_WALLET, accounts[5], allowance, 1000, {from: accounts[0]});
+        await lively.transferFrom(PUBLIC_SALE_WALLET, accounts[5], 1000, {from: accounts[1]});
 
         // then
-        assert.equal(allowance.toString(), '0')
+        assert.equal(balance.toString(), '1000')
+        assert.equal(allowance.toString(), '500000000')
 
-        // and
-        let result = await lively.allowance(PUBLIC_SALE_WALLET, accounts[5])
-        assert.equal(result.toString(), allowance.add(new web3.utils.BN(1000)).toString())
-    })
-
-    it('Should ADMIN_ROLE could not approve token from not permited wallet', async() => {
-        // given
-        let allowance = await lively.allowance(FOUNDING_TEAM_WALLET_ADDRESS, accounts[5]);
-
-        // when
-        try {
-            await lively.approveFromWallet(FOUNDING_TEAM_WALLET_ADDRESS, accounts[5], 1000, {from: accounts[0]});
-        } catch(error) {
-            // console.trace(error)
-        }
-
-        // then
-        assert.equal(allowance.toString(), '0')
-
-        // and
-        let result = await lively.allowance(FOUNDING_TEAM_WALLET_ADDRESS, accounts[5])
-        assert.equal(result.toString(), allowance.toString())
-    })
-
-    it('Should Any one transferFrom from alowance wallet to account', async() => {
-        // given
-        let allowance = await lively.allowance(PUBLIC_SALE_WALLET, accounts[5]);
-        let balance = await lively.balanceOf(accounts[6]);
-        let wallet = await lively.balanceOf(PUBLIC_SALE_WALLET);
-
-        // when
-        await lively.transferFrom(PUBLIC_SALE_WALLET, accounts[6], 1000, {from: accounts[5]});
-
-        // then
-        assert.equal(allowance.toString(), '1000')
-
-        // and
-        let result = await lively.allowance(PUBLIC_SALE_WALLET, accounts[5])
+        // and 
+        let result = await lively.allowance(PUBLIC_SALE_WALLET, accounts[1]);
         assert.equal(result.toString(), allowance.sub(new web3.utils.BN(1000)).toString())
 
+        // and
+        result = await lively.balanceOf(accounts[5])
+        assert.equal(result.toString(), balance.add(new web3.utils.BN(1000)).toString())
+    })
+
+    it('Should CONSENSUS_ROLE transfer token from FOUNDING_TEAM_WALLET_ADDRESS to account', async() => {
+        // given
+        let allowance = await lively.allowance(FOUNDING_TEAM_WALLET_ADDRESS, accounts[1]);
+        let balance = await lively.balanceOf(accounts[6]);
+
+        // when
+        await lively.transferFrom(FOUNDING_TEAM_WALLET_ADDRESS, accounts[6], 1000, {from: accounts[1]});
+
+        // then
+        assert.equal(balance.toString(), '0')
+        assert.equal(allowance.toString(), '200000000')
+
         // and 
-        result = await lively.balanceOf(PUBLIC_SALE_WALLET)
-        assert.equal(result.toString(), wallet.sub(new web3.utils.BN(1000)).toString())
-        
-        // and 
+        let result = await lively.allowance(FOUNDING_TEAM_WALLET_ADDRESS, accounts[1]);
+        assert.equal(result.toString(), allowance.sub(new web3.utils.BN(1000)).toString())
+
+        // and
         result = await lively.balanceOf(accounts[6])
         assert.equal(result.toString(), balance.add(new web3.utils.BN(1000)).toString())
     })

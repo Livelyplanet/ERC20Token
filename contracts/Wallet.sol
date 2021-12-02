@@ -2,9 +2,8 @@
 pragma solidity 0.8.10;
 
 import "./AccessControl.sol";
-import "./IWallet.sol";
 
-abstract contract Wallet is IWallet, AccessControl {
+abstract contract Wallet is AccessControl {
 
     address public constant PUBLIC_SALE_WALLET_ADDRESS = address(0x7eA3cFefA2b13e493110EdEd87e2Ba72C115BEc1);
     address public constant FOUNDING_TEAM_WALLET_ADDRESS = address(0x001b0a8A4749C70AEAD435Cf7E6dA06A7bAd1a2d);
@@ -36,19 +35,5 @@ abstract contract Wallet is IWallet, AccessControl {
     modifier validateSenderAccount {
         if ( _wallets[msg.sender].name != 0) revert ForbiddenError(msg.sender);
         _;
-    }
-
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) 
-        public 
-        view 
-        virtual 
-        override
-        returns (bool) 
-    {
-        return interfaceId == type(IWallet).interfaceId || super.supportsInterface(interfaceId);
     }
 } 

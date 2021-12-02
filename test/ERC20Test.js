@@ -130,4 +130,29 @@ contract('ERC20', (accounts) => {
         result = await lively.balanceOf(accounts[7])
         assert.equal(result.toString(), toBalance.add(new web3.utils.BN(1000)).toString())
     })
+
+    it('Should Any one transferFrom from alowance wallet to other account', async() => {
+        // given
+        let allowance = await lively.allowance(accounts[5], accounts[6]);
+        let fromBalance = await lively.balanceOf(accounts[5]);
+        let toBalance = await lively.balanceOf(accounts[7]);
+
+        // when
+        await lively.transferFrom(accounts[5], accounts[7], 1000, {from: accounts[6]});
+
+        // then
+        assert.equal(allowance.toString(), '1000')
+
+        // and
+        let result = await lively.allowance(accounts[5], accounts[6])
+        assert.equal(result.toString(), allowance.sub(new web3.utils.BN(1000)).toString())
+
+        // and 
+        result = await lively.balanceOf(accounts[5])
+        assert.equal(result.toString(), fromBalance.sub(new web3.utils.BN(1000)).toString())
+
+        // and 
+        result = await lively.balanceOf(accounts[7])
+        assert.equal(result.toString(), toBalance.add(new web3.utils.BN(1000)).toString())
+    })
 })
