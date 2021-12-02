@@ -77,6 +77,11 @@ contract LivelyToken is
         _balances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS] = 80_000_000; // equivalent 8% total supply
         _balances[BOUNTY_PROGRAMS_WALLET_ADDRESS] = 70_000_000; // equivalent 7% total supply
         _balances[CHARITY_WALLET_ADDRESS] = 50_000_000; // equivalent 5% total supply
+
+        _allowances[PUBLIC_SALE_WALLET_ADDRESS][msg.sender] = 500_000_000;
+        _allowances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS][msg.sender] = 80_000_000;
+        _allowances[BOUNTY_PROGRAMS_WALLET_ADDRESS][msg.sender] = 70_000_000;
+        _allowances[CHARITY_WALLET_ADDRESS][msg.sender] = 50_000_000;
     }
 
     /**
@@ -86,7 +91,7 @@ contract LivelyToken is
         public
         view
         virtual
-        override(AccessControl, Pausable, Wallet)
+        override(AccessControl, Pausable)
         returns (bool)
     {
         return
@@ -150,6 +155,20 @@ contract LivelyToken is
         return _balances[account];
     }
 
+     function firstInitializeConsensusRole(address account) 
+        public
+        validateSenderRole(ADMIN_ROLE)
+        validateAddress(account)
+    {
+        _firstInitializeConsensusRole(account);
+        _allowances[PUBLIC_SALE_WALLET_ADDRESS][account] = 500_000_000;
+        _allowances[FOUNDING_TEAM_WALLET_ADDRESS][account] = 200_000_000;
+        _allowances[RESERVES_WALLET_ADDRESS][account] = 100_000_000;     
+        _allowances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS][account] = 80_000_000;     
+        _allowances[BOUNTY_PROGRAMS_WALLET_ADDRESS][account] = 70_000_000;
+        _allowances[CHARITY_WALLET_ADDRESS][account] = 50_000_000;
+    }
+
     /**
      * @dev See {IFreezable-freezeOf}.
      */
@@ -166,6 +185,7 @@ contract LivelyToken is
         override
         whenNotPaused
         whenNotPausedOf(msg.sender)
+        validateSenderAccount
         returns (uint256 newFreezeBalance)
     {
         newFreezeBalance = _freeze(msg.sender, currentFreezeBalance, amount);
@@ -181,6 +201,7 @@ contract LivelyToken is
         override
         whenNotPaused
         whenNotPausedOf(msg.sender)
+        validateSenderAccount
         returns (uint256 newFreezeBalance)
     {
         newFreezeBalance = _unfreeze(msg.sender, currentFreezeBalance, amount);
@@ -243,7 +264,8 @@ contract LivelyToken is
         override
         whenNotPaused
         whenNotAccountsPausedOf(msg.sender, recipient)
-        forbiddenAnyRole(msg.sender)
+        validateSenderAccount
+        validateAddress(recipient)
         returns (bool)
     {
         _transfer(msg.sender, recipient, amount);
@@ -264,74 +286,6 @@ contract LivelyToken is
     }
 
     /**
-     * @dev See {IWallet-approveFromWallet} 
-     */
-    function approveFromWallet(
-        address walletAccount,
-        address spender,
-        uint256 currentAllowance,
-        uint256 amount
-    )
-        external
-        override
-        whenNotPaused
-        whenNotPausedOf(walletAccount)
-        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE)
-        returns (bool)
-    {
-        WalletInfo storage walletInfo = _wallets[walletAccount];
-        if (walletInfo.name != 0) revert IllegalWalletAddressError();
-        Role storage role = _getRole(msg.sender);
-        if (role.name == ADMIN_ROLE && walletInfo.role != ADMIN_ROLE)
-            revert UnauthorizedError(msg.sender);
-
-        uint256 currentAllowanceAccount = _allowances[walletAccount][spender];
-        if (currentAllowanceAccount != currentAllowance)
-            revert IllegalAllowanceError();
-        _allowances[walletAccount][spender] = amount;
-
-        emit ApprovalFromWallet(
-            walletAccount,
-            spender,
-            currentAllowanceAccount,
-            amount
-        );
-        return true;
-    }
-
-    /**
-     * @dev  See {IWallet-transferFromWallet} 
-     */
-    function transferFromWallet(
-        address walletAccount,
-        address recipient,
-        uint256 amount
-    )
-        external
-        whenNotPaused
-        whenNotAccountsPausedOf(walletAccount, recipient)
-        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE)
-        returns (bool)
-    {
-        WalletInfo storage walletInfo = _wallets[walletAccount];
-        if (walletInfo.name != 0) revert IllegalWalletAddressError();
-        Role storage role = _getRole(msg.sender);
-        if (role.name == ADMIN_ROLE && walletInfo.role != ADMIN_ROLE)
-            revert UnauthorizedError(msg.sender);
-
-        uint256 walletBalance = _balances[walletAccount];
-        if (walletBalance < amount) revert IllegalBalanceError();
-
-        unchecked {
-            _balances[walletAccount] = walletBalance - amount;
-        }
-
-        _balances[recipient] += amount;
-        emit TransferFromWallet(msg.sender, walletAccount, recipient, amount);
-        return true;
-    }
-
-    /**
      * @dev See {IERC20-approve}.
      *
      * Requirements:
@@ -343,7 +297,8 @@ contract LivelyToken is
         override
         whenNotPaused
         whenNotPausedOf(msg.sender)
-        forbiddenAnyRole(msg.sender)
+        validateSenderAccount
+        validateAddress(spender)
         returns (bool)
     {
         _approve(msg.sender, spender, amount);
@@ -362,7 +317,8 @@ contract LivelyToken is
         override
         whenNotPaused
         whenNotAccountsPausedOf(sender, recipient)
-        forbiddenAnyRole(msg.sender)
+        validateSenderAccount
+        validateAddresses(sender, recipient)
         returns (bool)
     {
         _transfer(sender, recipient, amount);
@@ -389,7 +345,8 @@ contract LivelyToken is
         override
         whenNotPaused
         whenNotAccountsPausedOf(sender, recipient)
-        forbiddenAnyRole(msg.sender)
+        validateSenderAccount
+        validateAddresses(sender, recipient)
         returns (bool)
     {
         _transfer(sender, recipient, amount);
@@ -416,7 +373,8 @@ contract LivelyToken is
         override
         whenNotPaused
         whenNotAccountsPausedOf(msg.sender, spender)
-        forbiddenAnyRole(msg.sender)
+        validateSenderAccount
+        validateAddress(spender)
         returns (bool success)
     {
         uint256 currentAllowanceAccount = _allowances[msg.sender][spender];
@@ -439,7 +397,8 @@ contract LivelyToken is
         external
         whenNotPaused
         whenNotPausedOf(msg.sender)
-        forbiddenAnyRole(msg.sender)
+        validateSenderAccount
+        validateAddress(spender)
         returns (bool)
     {
         uint256 currentAllowanceAccount = _allowances[msg.sender][spender];
@@ -462,7 +421,8 @@ contract LivelyToken is
         external
         whenNotPaused
         whenNotPausedOf(msg.sender)
-        forbiddenAnyRole(msg.sender)
+        validateSenderAccount
+        validateAddress(spender)
         returns (bool)
     {
         uint256 currentAllowanceAccount = _allowances[msg.sender][spender];
@@ -500,14 +460,19 @@ contract LivelyToken is
     {
         if (_balances[account] != currentAccountBalance)
             revert IllegalBalanceError();
+
         if (_totalSupply != currentTotalSupply)
             revert IllegalTotalSupplyError();
+            
         _totalSupply += amount;
         _balances[account] += amount;
         emit Mint(msg.sender, account, amount);
     }
 
-    function burnFrom(
+    /**
+     * @dev See {IBurnable-burn}.
+     */
+    function burn(
         address account,
         uint256 currentBalance,
         uint256 currentTotalSupply,
@@ -535,7 +500,7 @@ contract LivelyToken is
         _balances[account] = newBalance;
         _totalSupply -= amount;
 
-        emit BurnFrom(
+        emit Burn(
             msg.sender,
             account,
             currentBalance,
@@ -563,7 +528,7 @@ contract LivelyToken is
         address sender,
         address recipient,
         uint256 amount
-    ) internal validateAddresses(sender, recipient) {
+    ) internal {
         uint256 senderBalance = _balances[sender];
         if (senderBalance < amount) revert IllegalBalanceError();
         unchecked {
@@ -589,7 +554,7 @@ contract LivelyToken is
         address owner,
         address spender,
         uint256 amount
-    ) internal validateAddresses(owner, spender) {
+    ) internal {
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }

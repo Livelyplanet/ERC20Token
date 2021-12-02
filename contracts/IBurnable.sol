@@ -22,7 +22,7 @@ interface IBurnable {
      * - the caller must have allowance for ``accounts``'s tokens of at least
      * `amount`.
      */
-    function burnFrom(
+    function burn(
         address account, 
         uint256 currentBalance, 
         uint256 currentTotalSupply, 
@@ -31,11 +31,11 @@ interface IBurnable {
 
     /**
      * @dev Emitted when the burnFrom of a `amount` for an `account` from caller is set by 
-     * a call to {burnFrom}. 
+     * a call to {burn}. 
      * `amount` subtracted from the oldBalance of account and oldTotalSupply.
      * `from` is msg.sender. 
      */
-    event BurnFrom(
+    event Burn(
         address indexed from,
         address indexed account,
         uint256 oldBalance, 
