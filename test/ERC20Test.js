@@ -21,7 +21,7 @@ contract('ERC20', (accounts) => {
         await lively.firstInitializeConsensusRole(accounts[1]);
 
         // init accounts 5 
-        await lively.transferFromWallet(PUBLIC_SALE_WALLET, accounts[5], 10000, {from: accounts[0]});
+        await lively.transferFrom(PUBLIC_SALE_WALLET, accounts[5], 10000, {from: accounts[0]});
 
     });
 

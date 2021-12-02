@@ -323,43 +323,6 @@ contract LivelyToken is
     }
 
     /**
-     * @dev  See {IWallet-transferFromWallet} 
-     */
-    function transferFromWallet(
-        address walletAccount,
-        address recipient,
-        uint256 amount
-    )
-        external
-        whenNotPaused
-        whenNotAccountsPausedOf(walletAccount, recipient)
-        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE)
-        validateAddress(recipient)
-        returns (bool)
-    {
-        WalletInfo storage walletInfo = _wallets[walletAccount];
-        if (walletInfo.name == 0) revert IllegalWalletAddressError();
-
-        bytes32 role = _getRole(msg.sender);
-        if (role == ADMIN_ROLE && walletInfo.role != ADMIN_ROLE)
-            revert UnauthorizedError(msg.sender);
-
-        uint256 walletBalance = _balances[walletAccount];
-        if (walletBalance < amount) revert IllegalBalanceError();
-
-         uint256 currentAllowance = _allowances[walletAccount][msg.sender];
-        if (currentAllowance < amount) revert IllegalAllowanceError();
-        unchecked {
-            _balances[walletAccount] = walletBalance - amount;
-            _approve(walletAccount, msg.sender, currentAllowance - amount);
-        }
-
-        _balances[recipient] += amount;
-        emit TransferFromWallet(msg.sender, walletAccount, recipient, amount);
-        return true;
-    }
-
-    /**
      * @dev See {IERC20-approve}.
      *
      * Requirements:

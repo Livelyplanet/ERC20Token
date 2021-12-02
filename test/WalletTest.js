@@ -28,7 +28,7 @@ contract('Wallet', (accounts) => {
         let balance = await lively.balanceOf(accounts[5]);
 
         // when
-        await lively.transferFromWallet(PUBLIC_SALE_WALLET, accounts[5], 1000, {from: accounts[0]});
+        await lively.transferFrom(PUBLIC_SALE_WALLET, accounts[5], 1000, {from: accounts[0]});
 
         // then
         assert.equal(balance.toString(), '0')
@@ -49,7 +49,7 @@ contract('Wallet', (accounts) => {
 
         // when
         try {
-            await lively.transferFromWallet(FOUNDING_TEAM_WALLET_ADDRESS, accounts[5], 1000, {from: accounts[0]});
+            await lively.transferFrom(FOUNDING_TEAM_WALLET_ADDRESS, accounts[5], 1000, {from: accounts[0]});
         } catch(error) {
             // console.trace(error)
         }

@@ -143,7 +143,7 @@ contract('Freezable', (accounts) => {
         await lively.unpause(PUBLIC_SALE_WALLET, {from: accounts[1]});
 
         // when
-        await lively.transferFromWallet(PUBLIC_SALE_WALLET, accounts[1], 1000, {from: accounts[1]});
+        await lively.transferFrom(PUBLIC_SALE_WALLET, accounts[1], 1000, {from: accounts[1]});
 
         // then
         assert.equal(balance.toString(), '0')
