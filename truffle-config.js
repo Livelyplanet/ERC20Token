@@ -23,6 +23,14 @@
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+// create a file at the root of your project and name it .env -- there you can set process variables
+// like the mnemomic and Infura project key below. Note: .env is ignored by git to keep your private information safe
+require('dotenv').config();
+const mnemonic = process.env["MNEMONIC"];
+const alchemyApiUrl = process.env["API_URL"];
+const privateKey = process.env["PRIVATE_KEY"];
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -57,6 +65,29 @@ module.exports = {
     // },
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
+    polygon_testnet_mumbai: {
+      provider: () => new HDWalletProvider({
+        // mnemonic: {
+        //   phrase: mnemonic
+        // },
+        privateKeys: [privateKey],
+        providerOrUrl:alchemyApiUrl,
+        address_index: 0,
+        num_addresses: 10,
+        shareNonce: true,
+        pollingInterval: 12000,
+        wallet_hdpath: "m/44'/60'/0'/0/"
+      }),
+      network_id: 80001,   // Mumbai
+      gas: 6000000,
+      gasPrice: 10000000000,
+      confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true,   // Skip dry run before migrations? (default: false for public nets )
+      networkCheckTimeout: 100000,
+      deploymentPollingInterval: 10000
+      // from: '0xC27383068386C5753458Aac21Ca22029379bCBec', // 
+    },
     // ropsten: {
     // provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/YOUR-PROJECT-ID`),
     // network_id: 3,       // Ropsten's id

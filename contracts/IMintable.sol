@@ -26,6 +26,12 @@ interface IMintable {
      * a call to {mint}. 
      * `amount` add to the totalSupply and balance of account.
      */
-    event Mint(address indexed sender, address indexed account, uint256 amount);
+    event Mint(
+        address indexed sender, 
+        address indexed account, 
+        uint256 oldBalance, 
+        uint256 oldTotalSupply, 
+        uint256 amount
+    );
 }
 

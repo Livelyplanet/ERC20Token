@@ -1,4 +1,5 @@
 const assert = require("chai").assert;
+// const BN = require("web3-utils").BN;
 
 const LivelyToken = artifacts.require("LivelyToken")
 
@@ -24,6 +25,7 @@ contract('ERC20', (accounts) => {
         await lively.transferFrom(PUBLIC_SALE_WALLET, accounts[5], 10000, {from: accounts[0]});
 
     });
+
 
     it('Should Any One transfer token from itself account', async() => {
         // given 
@@ -113,7 +115,7 @@ contract('ERC20', (accounts) => {
         let toBalance = await lively.balanceOf(accounts[7]);
 
         // when
-        await lively.transferFromSec(accounts[5], accounts[7], 1000, {from: accounts[6]});
+        await lively.transferFromSec(accounts[5], accounts[7], fromBalance, 1000, {from: accounts[6]});
 
         // then
         assert.equal(allowance.toString(), '2000')
