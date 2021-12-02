@@ -1,20 +1,20 @@
 const assert = require("chai").assert;
 const truffleAssert = require('truffle-assertions');
 
-
 const LivelyToken = artifacts.require("LivelyToken")
 
 const ADMIN_ROLE = web3.utils.keccak256("ADMIN_ROLE")
-const BURNABLE_ROLE = web3.utils.keccak256("BURNALBE_ROLE")
+const BURNABLE_ROLE = web3.utils.keccak256("BURNABLE_ROLE")
 const CONSENSUS_ROLE = web3.utils.keccak256("CONSENSUS_ROLE")
+const NONE_ROLE = web3.utils.keccak256("NONE_ROLE")
 
 
 
-contract('LivelyToken', (accounts) => {
+contract('AccessControl', (accounts) => {
 
     let lively;
 
-    beforeEach(async() => {
+    before(async() => {
         lively = await LivelyToken.deployed()
     });
 
@@ -27,19 +27,263 @@ contract('LivelyToken', (accounts) => {
         assert.equal(result, true, 'ACL init ADMIN_ROLE role failed')
     })
 
-    it('Should ADMIN_ROLE can setup CONSENSUS_ROLE', async() => {
+    // it('Should ADMIN_ROLE cannot setup CONSENSUS_ROLE with EOA', async() => {
+    //     // given
+    //     const isConsensusRoleExist = await lively.hasRole(CONSENSUS_ROLE, accounts[1])
+
+    //     // when
+    //     try {
+    //         await lively.firstInitializeConsensusRole(accounts[1]);
+    //     } catch (error) {
+    //         // console.trace("tx error")
+    //     }
+
+    //     // then 
+    //     assert.isNotOk(isConsensusRoleExist, 'Consensus Role must not has an account before first init')
+
+    //     // and
+    //     const result = await lively.hasRole(CONSENSUS_ROLE, accounts[1])
+    //     assert.isNotOk(result, 'Consensus Role should has not an account after first init in TEST env')
+    // })
+
+    it('Should ADMIN_ROLE can setup CONSENSUS_ROLE with contract', async() => {
         // given
         const isConsensusRoleExist = await lively.hasRole(CONSENSUS_ROLE, accounts[1])
 
         // when
-        await truffleAssert.reverts(lively.firstInitializeConsensusRole(accounts[1]), "Hello");
+        await lively.firstInitializeConsensusRole(accounts[1]);
 
-        // // then 
-        // assert.isNotOk(isConsensusRoleExist, 'Consensus Role must not has an account before first init')
+        // then 
+        assert.isNotOk(isConsensusRoleExist, 'Consensus Role must not has an account before first init')
 
-        // // and
-        // const result = await lively.hasRole(CONSENSUS_ROLE, accounts[1])
-        // assert.isOk(result, 'Consensus Role must has an account after first init')
+        // and
+        const result = await lively.hasRole(CONSENSUS_ROLE, accounts[1])
+        assert.isOk(result, 'Consensus Role must has an account after first init in TEST env')
+    })
+
+    it('Should BURNABLE_ROLE has an acount after grant role', async() => {
+        // given
+        const isBurnableRoleExist = await lively.hasRole(BURNABLE_ROLE, accounts[2])
+
+        // when
+        await lively.grantRole(BURNABLE_ROLE, accounts[2], accounts[2], {from: accounts[1]})
+        
+
+        // then 
+        assert.isNotOk(isBurnableRoleExist, 'Burnable role before grant role has a an account')
+
+        // and
+        const result = await lively.hasRole(BURNABLE_ROLE, accounts[2])
+        assert.isOk(result, 'Burnable role must has an account after grant role')
+    })
+
+    it('Should any one could not call grantRole', async() => {
+        // given
+        const isBurnableRoleExist = await lively.hasRole(BURNABLE_ROLE, accounts[2])
+
+        // when
+        try {
+            await lively.grantRole(BURNABLE_ROLE, accounts[2], accounts[3], {from: accounts[10]})
+        } catch(error) {
+            // console.trace(error)
+        }
+        
+        // then 
+        assert.isOk(isBurnableRoleExist)
+
+        // and
+        const result = await lively.hasRole(BURNABLE_ROLE, accounts[3])
+        assert.isNotOk(result)
+    })
+
+    it('Should any one could not call revokeRole', async() => {
+        // given
+        const isBurnableRoleExist = await lively.hasRole(BURNABLE_ROLE, accounts[2])
+
+        // when
+        try {
+            await lively.revokeRole(BURNABLE_ROLE, accounts[1],{from: accounts[10]})
+        } catch(error) {
+            // console.trace(error)
+        }
+        
+        // then 
+        assert.isOk(isBurnableRoleExist)
+
+        // and
+        const result = await lively.hasRole(BURNABLE_ROLE, accounts[3])
+        assert.isNotOk(result)
+    })
+
+
+    it('Should BURNABLE_ROLE could not call grantRole', async() => {
+        // given
+        const isBurnableRoleExist = await lively.hasRole(BURNABLE_ROLE, accounts[2])
+
+        // when
+        try {
+            await lively.grantRole(BURNABLE_ROLE, accounts[2], accounts[3], {from: accounts[2]})
+        } catch(error) {
+            // console.trace(error)
+        }
+        
+        // then 
+        assert.isOk(isBurnableRoleExist)
+
+        // and
+        const result = await lively.hasRole(BURNABLE_ROLE, accounts[3])
+        assert.isNotOk(result)
+    })
+
+    it('Should BURNABLE_ROLE could not call revokeRole', async() => {
+        // given
+        const isBurnableRoleExist = await lively.hasRole(BURNABLE_ROLE, accounts[2])
+
+        // when
+        try {
+            await lively.revokeRole(BURNABLE_ROLE, accounts[1],{from: accounts[2]})
+        } catch(error) {
+            // console.trace(error)
+        }
+        
+        // then 
+        assert.isOk(isBurnableRoleExist)
+
+        // and
+        const result = await lively.hasRole(BURNABLE_ROLE, accounts[3])
+        assert.isNotOk(result)
+    })
+
+    it('Should ADMIN_ROLE could not call grantRole', async() => {
+        // given
+        const isBurnableRoleExist = await lively.hasRole(BURNABLE_ROLE, accounts[2])
+
+        // when
+        try {
+            await lively.grantRole(BURNABLE_ROLE, accounts[2], accounts[3])
+        } catch(error) {
+            // console.trace(error)
+        }
+        
+        // then 
+        assert.isOk(isBurnableRoleExist)
+
+        // and
+        const result = await lively.hasRole(BURNABLE_ROLE, accounts[3])
+        assert.isNotOk(result)
+    })
+
+    it('Should ADMIN_ROLE could not call revokeRole', async() => {
+        // given
+        const isBurnableRoleExist = await lively.hasRole(BURNABLE_ROLE, accounts[2])
+
+        // when
+        try {
+            await lively.revokeRole(BURNABLE_ROLE, accounts[2])
+        } catch(error) {
+            // console.trace(error)
+        }
+        
+        // then 
+        assert.isOk(isBurnableRoleExist)
+
+        // and
+        const result = await lively.hasRole(BURNABLE_ROLE, accounts[3])
+        assert.isNotOk(result)
+    })
+
+    it('Should BURNABLE_ROLE has not an acount after revoke role', async() => {
+        // given
+        const isBurnableRoleExist = await lively.hasRole(BURNABLE_ROLE, accounts[2])
+
+        // when
+        await lively.revokeRole(BURNABLE_ROLE, accounts[2], {from: accounts[1]})
+        
+        // then 
+        assert.isOk(isBurnableRoleExist, 'Burnable role must has an account')
+
+        // and
+        let result = await lively.hasRole(BURNABLE_ROLE, accounts[2])
+        assert.isNotOk(result, 'Burnable role must has not an account after revoke role')
+
+        // and
+        result = await lively.hasRole(NONE_ROLE, accounts[2])
+        assert.isOk(result, 'accounts[2] must has a NONE_ROLE')
 
     })
+
+    it('Should CONSENSUS_ROLE could not revoke role from itself', async() => {
+        // given
+        const isConsensusRoleExist = await lively.hasRole(CONSENSUS_ROLE, accounts[1])
+
+        // when
+        try {
+            await lively.revokeRole(CONSENSUS_ROLE, accounts[1], {from: accounts[1]})
+        } catch(error) {
+            // console.trace(error)
+        }
+        
+        // then 
+        assert.isOk(isConsensusRoleExist, 'Consensus role must has an account')
+
+        // and
+        const result = await lively.hasRole(NONE_ROLE, accounts[1])
+        assert.isNotOk(result, 'Consensus role could not revoke itself')
+    })
+
+    it('Should CONSENSUS_ROLE can grantRole to newAccount', async() => {
+        // given
+        const isConsensusRoleExist = await lively.hasRole(CONSENSUS_ROLE, accounts[1])
+
+        // when
+        await lively.grantRole(CONSENSUS_ROLE, accounts[1], accounts[4],{from: accounts[1]})
+        
+        // then 
+        assert.isOk(isConsensusRoleExist, 'Consensus role must has an account')
+
+        // and
+        let result = await lively.hasRole(CONSENSUS_ROLE, accounts[4])
+        assert.isOk(result, 'Consensus role granted to accounts[4]')
+    })
+
+    it('Should CONSENSUS_ROLE can grant ADMIN_ROLE to newAccount', async() => {
+        // given
+        const isAdminRoleExist = await lively.hasRole(ADMIN_ROLE, accounts[0])
+
+        // when
+        await lively.grantRole(ADMIN_ROLE, accounts[0], accounts[5],{from: accounts[4]})
+        
+        // then 
+        assert.isOk(isAdminRoleExist, 'Admin role must has an account')
+
+        // and
+        const result = await lively.hasRole(ADMIN_ROLE, accounts[5])
+        assert.isOk(result, 'Admin role granted to accounts[5]')
+    })
+
+    it('Should CONSENSUS_ROLE can revoke ADMIN_ROLE from account', async() => {
+        // given
+        const isAdminRoleExist = await lively.hasRole(ADMIN_ROLE, accounts[5])
+
+        // when
+        await lively.revokeRole(ADMIN_ROLE, accounts[5],{from: accounts[4]})
+        
+        // then 
+        assert.isOk(isAdminRoleExist, 'Admin role must has an account')
+
+        // and
+        let result = await lively.hasRole(ADMIN_ROLE, accounts[5])
+        assert.isNotOk(result, 'Admin role revoke from accounts[5]')
+
+        result = await lively.hasRole(NONE_ROLE, accounts[5])
+        assert.isOk(result, 'accounts[5] set to NONE_ROLE')
+    })
+
+    // it('Should hasRole raise exception when address invalid', () => {
+
+    //     lively.hasRole(ADMIN_ROLE, lively.address).catch(error => error) 
+
+    //     // // when
+    //     // truffleAssert.reverts(await lively.hasRole(ADMIN_ROLE, lively.address), '')
+    // })
 })

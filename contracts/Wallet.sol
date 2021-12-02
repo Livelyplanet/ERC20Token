@@ -30,6 +30,16 @@ abstract contract Wallet is IWallet, AccessControl {
     }
 
     /**
+     * @dev Modifier that checks that an account must not be any wallet addresses. Reverts
+     * with a ForbiddenError(address account).
+     */
+    modifier validateSenderAccount {
+        if ( _wallets[msg.sender].name != 0) revert ForbiddenError(msg.sender);
+        _;
+    }
+
+
+    /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) 

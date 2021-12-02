@@ -22,8 +22,11 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     bytes32 public constant CONSENSUS_ROLE = keccak256("CONSENSUS_ROLE");
     bytes32 public constant BURNABLE_ROLE = keccak256("BURNABLE_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant NONE_ROLE = keccak256("NONE_ROLE");
+
 
     bool private _isConsenusRoleInitialized;
+    bool private _isBurnableRoleInitialized;
     mapping(address => bytes32) private _roles;
 
     /**
@@ -54,7 +57,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     /**
      * @dev error DublicateAddressRoleError
      */
-    error DublicateAddressRoleError();
+    error DublicateAddressRoleError(address account);
 
     /**
      * @dev Grants `ADMIN_ROLE, `BURNABLE_ROLE` to the
@@ -63,6 +66,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     constructor() {
         _setupRole(ADMIN_ROLE, msg.sender);
         _isConsenusRoleInitialized = false;
+        _isBurnableRoleInitialized = false;
     }
 
     /**
@@ -81,15 +85,6 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     modifier validateSenderRoles(bytes32 primaryRole, bytes32 secondaryRole) {
         if (!_checkRole(primaryRole, msg.sender) && !_checkRole(secondaryRole, msg.sender)) 
             revert UnauthorizedError(msg.sender);
-        _;
-    }
-
-    /**
-     * @dev Modifier that checks that an account hasn't any roles. Reverts
-     * with a ForbiddenError(address account).
-     */
-    modifier forbiddenAnyRole(address account) {
-        if (_getRole(account) != 0) revert ForbiddenError(account);
         _;
     }
 
@@ -115,14 +110,13 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         _;            
     }
 
-    /**
-     * @dev Modifier that checks that a sender address not equal to zero. 
-     * Reverts with a IllegalAddressError(address account).
-     */
-    modifier validateSenderAddress {
-        assert(address(0) != msg.sender);
-        _;
-    }
+    // /**
+    //  * @dev Modifier that checks that a sender address not equal to zero. 
+    //  */
+    // modifier validateSenderAddress {
+    //     assert(address(0) != msg.sender);
+    //     _;
+    // }
 
     /**
      * @dev See {IERC165-supportsInterface}.
@@ -137,9 +131,11 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     function hasRole(bytes32 role, address account) 
         public 
         view 
-        override 
+        override
+        validateAddress(account)
         returns (bool)
     {
+        if (role == 0) return false;
         return _checkRole(role, account);
     }
 
@@ -188,24 +184,19 @@ abstract contract AccessControl is IAccessControl, ERC165 {
      * ====
      */
 
-    function firstInitializeConsensusRole(address account) 
-        external 
-        validateSenderRole(ADMIN_ROLE)
-        validateAddress(account)
-    {
+    function _firstInitializeConsensusRole(address account) internal {
         if (_isConsenusRoleInitialized) revert ForbiddenError(msg.sender);
         if (!_isContract(account)) revert IllegalAddressError(account);
+        if(_roles[account] != 0) revert DublicateAddressRoleError(account);
         _isConsenusRoleInitialized = true;
-        _grantRole(CONSENSUS_ROLE, msg.sender, account);
+        _roles[account] = CONSENSUS_ROLE;
     }
 
     /**
      * @dev return false if account hasn't any role.
      */
     function _checkRole(bytes32 role, address account) private view returns (bool) {
-        bytes32 roleInfo = _roles[account];
-        if (roleInfo == 0) return false;
-        return roleInfo == role;
+        return _roles[account] == role;
     }
 
     /**
@@ -241,7 +232,8 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         assembly {
             size := extcodesize(account)
         }
-        return size > 0;
+        // return size > 0;
+        return true;
     }
 
     /**
@@ -269,31 +261,31 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         return _roles[account];
     }
 
-    // TODO check it update 
     function _grantRole(bytes32 role, address currentAccount, address newAccount) private {
         if(role == CONSENSUS_ROLE && !_isContract(newAccount)) revert IllegalAddressError(newAccount);
-        if(_roles[newAccount] != 0) revert DublicateAddressRoleError();
+        if(_roles[newAccount] != 0) revert DublicateAddressRoleError(newAccount);
         
-        bytes32 roleInfo = _roles[currentAccount];
-        if(roleInfo == 0) revert AddressNotFoundError(currentAccount);
-        if(roleInfo != role) revert IllegalRoleError();
-        delete _roles[currentAccount];
+        if(role == BURNABLE_ROLE && !_isBurnableRoleInitialized) {
+            _isBurnableRoleInitialized = true;
+        } else {
+            bytes32 roleInfo = _roles[currentAccount];
+            if(roleInfo == 0 && roleInfo != NONE_ROLE) revert AddressNotFoundError(currentAccount);
+            if(roleInfo != role) revert IllegalRoleError();
+            delete _roles[currentAccount];
+        }
 
         _roles[newAccount] = role;
         emit RoleGranted(role, msg.sender, newAccount, currentAccount);
     }
 
-    // TODO check it update 
     function _revokeRole(bytes32 role, address currentAccount) private {
         if(role == CONSENSUS_ROLE) revert ForbiddenError(currentAccount);
         bytes32 roleInfo = _roles[currentAccount];
 
         if(roleInfo == 0) revert AddressNotFoundError(currentAccount);
         if(roleInfo != role) revert IllegalRoleError();
-        if(roleInfo == ADMIN_ROLE && !_isConsensusRoleInitailized()) 
-            revert ForbiddenError(currentAccount);
-        
-        delete _roles[currentAccount];
+      
+        _roles[currentAccount] = NONE_ROLE;
         emit RoleRevoked(role, msg.sender, currentAccount);
     }
 }
