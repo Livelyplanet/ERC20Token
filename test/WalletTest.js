@@ -9,6 +9,7 @@ const NONE_ROLE = web3.utils.keccak256("NONE_ROLE")
 
 const PUBLIC_SALE_WALLET = "0x7eA3cFefA2b13e493110EdEd87e2Ba72C115BEc1"
 const FOUNDING_TEAM_WALLET_ADDRESS = "0x001b0a8A4749C70AEAD435Cf7E6dA06A7bAd1a2d"
+const decimal = new web3.utils.BN('1000000000000000000')
 
 contract('Wallet', (accounts) => {
 
@@ -32,7 +33,7 @@ contract('Wallet', (accounts) => {
 
         // then
         assert.equal(balance.toString(), '0')
-        assert.equal(allowance.toString(), '500000000')
+        assert.equal(allowance.toString(), (new web3.utils.BN('500000000')).mul(decimal).toString())
 
         // and 
         let result = await lively.allowance(PUBLIC_SALE_WALLET, accounts[0]);
@@ -72,7 +73,7 @@ contract('Wallet', (accounts) => {
 
         // then
         assert.equal(balance.toString(), '1000')
-        assert.equal(allowance.toString(), '500000000')
+        assert.equal(allowance.toString(), (new web3.utils.BN('500000000')).mul(decimal).toString())
 
         // and 
         let result = await lively.allowance(PUBLIC_SALE_WALLET, accounts[1]);
@@ -93,7 +94,7 @@ contract('Wallet', (accounts) => {
 
         // then
         assert.equal(balance.toString(), '0')
-        assert.equal(allowance.toString(), '200000000')
+        assert.equal(allowance.toString(), (new web3.utils.BN('200000000')).mul(decimal).toString())
 
         // and 
         let result = await lively.allowance(FOUNDING_TEAM_WALLET_ADDRESS, accounts[1]);

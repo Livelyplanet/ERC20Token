@@ -110,14 +110,6 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         _;            
     }
 
-    // /**
-    //  * @dev Modifier that checks that a sender address not equal to zero. 
-    //  */
-    // modifier validateSenderAddress {
-    //     assert(address(0) != msg.sender);
-    //     _;
-    // }
-
     /**
      * @dev See {IERC165-supportsInterface}.
      */

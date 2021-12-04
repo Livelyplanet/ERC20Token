@@ -1,4 +1,5 @@
 const assert = require("chai").assert;
+// const BN = require("web3-utils").BN;
 
 const LivelyToken = artifacts.require("LivelyToken")
 
@@ -24,6 +25,7 @@ contract('ERC20', (accounts) => {
         await lively.transferFrom(PUBLIC_SALE_WALLET, accounts[5], 10000, {from: accounts[0]});
 
     });
+
 
     it('Should Any One transfer token from itself account', async() => {
         // given 
@@ -113,7 +115,7 @@ contract('ERC20', (accounts) => {
         let toBalance = await lively.balanceOf(accounts[7]);
 
         // when
-        await lively.transferFromSec(accounts[5], accounts[7], 1000, {from: accounts[6]});
+        await lively.transferFromSec(accounts[5], accounts[7], fromBalance, 1000, {from: accounts[6]});
 
         // then
         assert.equal(allowance.toString(), '2000')
@@ -154,5 +156,39 @@ contract('ERC20', (accounts) => {
         // and 
         result = await lively.balanceOf(accounts[7])
         assert.equal(result.toString(), toBalance.add(new web3.utils.BN(1000)).toString())
+    })
+
+    it('Should Contract receive ether', async() => {
+        // given 
+        let contractBalance = await web3.eth.getBalance(lively.address)
+
+        // when 
+        await web3.eth.sendTransaction({from: accounts[3], to: lively.address, value: web3.utils.toWei('10', 'ether')})
+
+        // then
+        assert.equal(contractBalance.toString(), '0')    
+
+        // and
+        let result = await web3.eth.getBalance(lively.address)
+        assert.equal(result.toString(), web3.utils.toWei('10', 'ether'))
+    })
+
+
+    it('Should CONSENSUS withdraw all balance from contract', async() => {
+        // given 
+        let balance = await web3.eth.getBalance(lively.address)
+        let accountBalance = await web3.eth.getBalance(accounts[3])
+
+        // when 
+        await lively.withdrawContractBalance(accounts[3], {from: accounts[1]})
+
+        //then 
+        let result = await web3.eth.getBalance(lively.address)
+        assert.equal(result.toString(), '0')
+
+        // and 
+        result = await web3.eth.getBalance(accounts[3])
+        assert.equal(result.toString(), (new web3.utils.BN(accountBalance.toString()).add(new web3.utils.BN(balance))))
+    
     })
 })

@@ -77,6 +77,7 @@ interface IERC20Sec {
     function transferFromSec(
         address sender,
         address recipient,
+        uint256 currentBalance,
         uint256 amount
     ) external returns (bool);
 
@@ -93,13 +94,37 @@ interface IERC20Sec {
     );
 
     /**
+     * @dev Emitted when increment the allowance of a `spender` for an `owner` is set by
+     * a call to {increaseAllowanceSec}. 
+     * `value` is the increment current allowance.
+     */
+    event ApprovalIncSec(
+        address indexed owner,
+        address indexed spender,
+        uint256 oldAllowance,
+        uint256 value
+    );
+
+    /**
+     * @dev Emitted when decrement the allowance of a `spender` for an `owner` is set by
+     * a call to {decreaseAllowanceSec}. 
+     * `value` is the decrement current allowance.
+     */
+    event ApprovalDecSec(
+        address indexed owner,
+        address indexed spender,
+        uint256 oldAllowance,
+        uint256 value
+    );
+
+    /**
      * @dev Emitted when spender wants to transfer `value` tokens are moved from one account (`from`) to
      * another (`to`).
      *
      * Note that `value` may be zero.
      */
     event TransferFromSec(
-        address indexed spender,
+        address indexed sender,
         address indexed from,
         address indexed to,
         uint256 value

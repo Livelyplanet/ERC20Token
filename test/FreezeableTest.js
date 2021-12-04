@@ -9,6 +9,8 @@ const NONE_ROLE = web3.utils.keccak256("NONE_ROLE")
 
 const PUBLIC_SALE_WALLET = "0x7eA3cFefA2b13e493110EdEd87e2Ba72C115BEc1"
 
+const decimal = new web3.utils.BN('1000000000000000000')
+
 contract('Freezable', (accounts) => {
 
     let lively;
@@ -31,7 +33,7 @@ contract('Freezable', (accounts) => {
 
         // then
         assert.equal(freezeBalance.toString(), '0')
-        assert.equal(balance.toString(), '500000000')
+        assert.equal(balance.toString(), (new web3.utils.BN('500000000')).mul(decimal).toString())
 
         // and
         let result = await lively.freezeOf(PUBLIC_SALE_WALLET);
@@ -52,7 +54,7 @@ contract('Freezable', (accounts) => {
 
         // then
         assert.equal(freezeBalance.toString(), '1000')
-        assert.equal(balance.toString(), '499999000')
+        assert.equal(balance.toString(), (new web3.utils.BN('500000000')).mul(decimal).sub(new web3.utils.BN(1000)).toString())
 
         // and
         let result = await lively.freezeOf(PUBLIC_SALE_WALLET);
@@ -76,7 +78,7 @@ contract('Freezable', (accounts) => {
 
         // then
         assert.equal(freezeBalance.toString(), '0')
-        assert.equal(balance.toString(), '500000000')
+        assert.equal(balance.toString(), (new web3.utils.BN('500000000')).mul(decimal).toString())
 
         // and
         let result = await lively.freezeOf(PUBLIC_SALE_WALLET);
@@ -100,7 +102,7 @@ contract('Freezable', (accounts) => {
 
         // then
         assert.equal(freezeBalance.toString(), '0')
-        assert.equal(balance.toString(), '500000000')
+        assert.equal(balance.toString(), (new web3.utils.BN('500000000')).mul(decimal).toString())
 
         // and
         let result = await lively.freezeOf(PUBLIC_SALE_WALLET);
@@ -117,7 +119,7 @@ contract('Freezable', (accounts) => {
         let balance = await lively.balanceOf(accounts[1]);
         await lively.unpauseAll({from: accounts[1]});
 
-        // when
+        // whenadd
         try {
             await lively.freeze(freezeBalance, 1000, {from: accounts[1]})
         } catch(error) {

@@ -12,20 +12,16 @@ abstract contract Wallet is AccessControl {
     address public constant BOUNTY_PROGRAMS_WALLET_ADDRESS = address(0x00fc4fBcf0F01553bfC470fF85FCA2F3F21e138b);
     address public constant CHARITY_WALLET_ADDRESS = address(0x7A6D0f0F96f39E54AbfEbA3D1dA6f56c921B9cB7);
 
-    struct WalletInfo {
-        bytes32 name;
-        bytes32 role;
-    }
 
-    mapping(address => WalletInfo) internal _wallets; 
+    mapping(address => bytes32) internal _wallets; 
 
     constructor() {    
-        _wallets[PUBLIC_SALE_WALLET_ADDRESS] = WalletInfo(keccak256("PUBLIC_SALE_WALLET"), ADMIN_ROLE);
-        _wallets[FOUNDING_TEAM_WALLET_ADDRESS] = WalletInfo(keccak256("FOUNDING_TEAM_WALLET"), 0x0);
-        _wallets[RESERVES_WALLET_ADDRESS] = WalletInfo(keccak256("RESERVES_WALLET"), 0x0);
-        _wallets[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS] = WalletInfo(keccak256("AUDIO_VIDEO_PRODUCTIONS_WALLET"), ADMIN_ROLE);
-        _wallets[BOUNTY_PROGRAMS_WALLET_ADDRESS] = WalletInfo(keccak256("BOUNTY_PROGRAMS_WALLET"), ADMIN_ROLE);
-        _wallets[CHARITY_WALLET_ADDRESS] = WalletInfo(keccak256("CHARITY_WALLET"), ADMIN_ROLE);
+        _wallets[PUBLIC_SALE_WALLET_ADDRESS] = keccak256("PUBLIC_SALE_WALLET");
+        _wallets[FOUNDING_TEAM_WALLET_ADDRESS] = keccak256("FOUNDING_TEAM_WALLET");
+        _wallets[RESERVES_WALLET_ADDRESS] = keccak256("RESERVES_WALLET");
+        _wallets[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS] = keccak256("AUDIO_VIDEO_PRODUCTIONS_WALLET");
+        _wallets[BOUNTY_PROGRAMS_WALLET_ADDRESS] = keccak256("BOUNTY_PROGRAMS_WALLET");
+        _wallets[CHARITY_WALLET_ADDRESS] = keccak256("CHARITY_WALLET");
     }
 
     /**
@@ -33,7 +29,7 @@ abstract contract Wallet is AccessControl {
      * with a ForbiddenError(address account).
      */
     modifier validateSenderAccount {
-        if ( _wallets[msg.sender].name != 0) revert ForbiddenError(msg.sender);
+        if ( _wallets[msg.sender] != 0) revert ForbiddenError(msg.sender);
         _;
     }
 } 

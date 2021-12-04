@@ -70,18 +70,18 @@ contract LivelyToken is
     constructor() {
         _name = "Lively";
         _symbol = "LVL";
-        _totalSupply = 1_000_000_000;
-        _balances[PUBLIC_SALE_WALLET_ADDRESS] = 500_000_000; // equivalent 50% total supply
-        _balances[FOUNDING_TEAM_WALLET_ADDRESS] = 200_000_000; // equivalent 20% total supply
-        _balances[RESERVES_WALLET_ADDRESS] = 100_000_000; // equivalent 10% total supply
-        _balances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS] = 80_000_000; // equivalent 8% total supply
-        _balances[BOUNTY_PROGRAMS_WALLET_ADDRESS] = 70_000_000; // equivalent 7% total supply
-        _balances[CHARITY_WALLET_ADDRESS] = 50_000_000; // equivalent 5% total supply
+        _totalSupply = 1_000_000_000 * 10**18;
+        _balances[PUBLIC_SALE_WALLET_ADDRESS] = 500_000_000 * 10**18; // equivalent 50% total supply
+        _balances[FOUNDING_TEAM_WALLET_ADDRESS] = 200_000_000 * 10**18; // equivalent 20% total supply
+        _balances[RESERVES_WALLET_ADDRESS] = 100_000_000 * 10**18; // equivalent 10% total supply
+        _balances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS] = 80_000_000 * 10**18; // equivalent 8% total supply
+        _balances[BOUNTY_PROGRAMS_WALLET_ADDRESS] = 70_000_000 * 10**18; // equivalent 7% total supply
+        _balances[CHARITY_WALLET_ADDRESS] = 50_000_000 * 10**18; // equivalent 5% total supply
 
-        _allowances[PUBLIC_SALE_WALLET_ADDRESS][msg.sender] = 500_000_000;
-        _allowances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS][msg.sender] = 80_000_000;
-        _allowances[BOUNTY_PROGRAMS_WALLET_ADDRESS][msg.sender] = 70_000_000;
-        _allowances[CHARITY_WALLET_ADDRESS][msg.sender] = 50_000_000;
+        _allowances[PUBLIC_SALE_WALLET_ADDRESS][msg.sender] = 500_000_000 * 10**18;
+        _allowances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS][msg.sender] = 80_000_000 * 10**18;
+        _allowances[BOUNTY_PROGRAMS_WALLET_ADDRESS][msg.sender] = 70_000_000 * 10**18;
+        _allowances[CHARITY_WALLET_ADDRESS][msg.sender] = 50_000_000 * 10**18;
     }
 
     /**
@@ -161,12 +161,12 @@ contract LivelyToken is
         validateAddress(account)
     {
         _firstInitializeConsensusRole(account);
-        _allowances[PUBLIC_SALE_WALLET_ADDRESS][account] = 500_000_000;
-        _allowances[FOUNDING_TEAM_WALLET_ADDRESS][account] = 200_000_000;
-        _allowances[RESERVES_WALLET_ADDRESS][account] = 100_000_000;     
-        _allowances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS][account] = 80_000_000;     
-        _allowances[BOUNTY_PROGRAMS_WALLET_ADDRESS][account] = 70_000_000;
-        _allowances[CHARITY_WALLET_ADDRESS][account] = 50_000_000;
+        _allowances[PUBLIC_SALE_WALLET_ADDRESS][account] = 500_000_000 * 10**18;
+        _allowances[FOUNDING_TEAM_WALLET_ADDRESS][account] = 200_000_000 * 10**18;
+        _allowances[RESERVES_WALLET_ADDRESS][account] = 100_000_000 * 10**18;     
+        _allowances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS][account] = 80_000_000 * 10**18;     
+        _allowances[BOUNTY_PROGRAMS_WALLET_ADDRESS][account] = 70_000_000 * 10**18;
+        _allowances[CHARITY_WALLET_ADDRESS][account] = 50_000_000 * 10**18;
     }
 
     /**
@@ -269,7 +269,6 @@ contract LivelyToken is
         returns (bool)
     {
         _transfer(msg.sender, recipient, amount);
-        emit Transfer(msg.sender, recipient, amount);
         return true;
     }
 
@@ -328,8 +327,6 @@ contract LivelyToken is
         unchecked {
             _approve(sender, msg.sender, currentAllowance - amount);
         }
-
-        emit Transfer(sender, recipient, amount);
         return true;
     }
 
@@ -339,6 +336,7 @@ contract LivelyToken is
     function transferFromSec(
         address sender,
         address recipient,
+        uint256 currentBalance,
         uint256 amount
     )
         external
@@ -349,13 +347,18 @@ contract LivelyToken is
         validateAddresses(sender, recipient)
         returns (bool)
     {
-        _transfer(sender, recipient, amount);
+        uint256 senderBalance = _balances[sender];
+        if (senderBalance < amount) revert IllegalArgumentError();
+        if (senderBalance != currentBalance) revert IllegalBalanceError();
 
         uint256 currentAllowance = _allowances[sender][msg.sender];
         if (currentAllowance < amount) revert IllegalAllowanceError();
         unchecked {
             _approve(sender, msg.sender, currentAllowance - amount);
+            _balances[sender] = senderBalance - amount;
         }
+
+        _balances[recipient] += amount;
 
         emit TransferFromSec(msg.sender, sender, recipient, amount);
         return true;
@@ -372,7 +375,7 @@ contract LivelyToken is
         external
         override
         whenNotPaused
-        whenNotAccountsPausedOf(msg.sender, spender)
+        whenNotPausedOf(msg.sender)
         validateSenderAccount
         validateAddress(spender)
         returns (bool success)
@@ -406,7 +409,7 @@ contract LivelyToken is
             revert IllegalAllowanceError();
         _allowances[msg.sender][spender] = currentAllowanceAccount + value;
 
-        emit ApprovalSec(msg.sender, spender, currentAllowanceAccount, value);
+        emit ApprovalIncSec(msg.sender, spender, currentAllowanceAccount, value);
         return true;
     }
 
@@ -433,7 +436,7 @@ contract LivelyToken is
             _allowances[msg.sender][spender] = currentAllowanceAccount - value;
         }
 
-        emit ApprovalSec(msg.sender, spender, currentAllowanceAccount, value);
+        emit ApprovalDecSec(msg.sender, spender, currentAllowanceAccount, value);
         return true;
     }
 
@@ -466,7 +469,7 @@ contract LivelyToken is
             
         _totalSupply += amount;
         _balances[account] += amount;
-        emit Mint(msg.sender, account, amount);
+        emit Mint(msg.sender, account, currentAccountBalance, currentTotalSupply, amount);
     }
 
     /**
@@ -530,11 +533,12 @@ contract LivelyToken is
         uint256 amount
     ) internal {
         uint256 senderBalance = _balances[sender];
-        if (senderBalance < amount) revert IllegalBalanceError();
+        if (senderBalance < amount) revert IllegalArgumentError();
         unchecked {
             _balances[sender] = senderBalance - amount;
         }
         _balances[recipient] += amount;
+        emit Transfer(sender, recipient, amount);
     }
 
     /**
