@@ -157,4 +157,38 @@ contract('ERC20', (accounts) => {
         result = await lively.balanceOf(accounts[7])
         assert.equal(result.toString(), toBalance.add(new web3.utils.BN(1000)).toString())
     })
+
+    it('Should Contract receive ether', async() => {
+        // given 
+        let contractBalance = await web3.eth.getBalance(lively.address)
+
+        // when 
+        await web3.eth.sendTransaction({from: accounts[3], to: lively.address, value: web3.utils.toWei('10', 'ether')})
+
+        // then
+        assert.equal(contractBalance.toString(), '0')    
+
+        // and
+        let result = await web3.eth.getBalance(lively.address)
+        assert.equal(result.toString(), web3.utils.toWei('10', 'ether'))
+    })
+
+
+    it('Should CONSENSUS withdraw all balance from contract', async() => {
+        // given 
+        let balance = await web3.eth.getBalance(lively.address)
+        let accountBalance = await web3.eth.getBalance(accounts[3])
+
+        // when 
+        await lively.withdrawContractBalance(accounts[3], {from: accounts[1]})
+
+        //then 
+        let result = await web3.eth.getBalance(lively.address)
+        assert.equal(result.toString(), '0')
+
+        // and 
+        result = await web3.eth.getBalance(accounts[3])
+        assert.equal(result.toString(), (new web3.utils.BN(accountBalance.toString()).add(new web3.utils.BN(balance))))
+    
+    })
 })
