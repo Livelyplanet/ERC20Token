@@ -224,8 +224,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         assembly {
             size := extcodesize(account)
         }
-        // return size > 0;
-        return true;
+        return size > 0;
     }
 
     /**
