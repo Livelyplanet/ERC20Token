@@ -135,6 +135,10 @@ yarn.lock
 # Node.js
 package-lock.json
 
+# solidity
+coverage.json
+.deps
+
 
 # Logs
 logs
@@ -157,7 +161,7 @@ pids
 lib-cov
 
 # Coverage directory used by tools like istanbul
-coverage
+coverage/
 *.lcov
 
 # nyc test coverage

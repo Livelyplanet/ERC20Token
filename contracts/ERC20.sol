@@ -78,9 +78,15 @@ contract LivelyToken is
         _balances[BOUNTY_PROGRAMS_WALLET_ADDRESS] = 70_000_000 * 10**18; // equivalent 7% total supply
         _balances[CHARITY_WALLET_ADDRESS] = 50_000_000 * 10**18; // equivalent 5% total supply
 
-        _allowances[PUBLIC_SALE_WALLET_ADDRESS][msg.sender] = 500_000_000 * 10**18;
-        _allowances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS][msg.sender] = 80_000_000 * 10**18;
-        _allowances[BOUNTY_PROGRAMS_WALLET_ADDRESS][msg.sender] = 70_000_000 * 10**18;
+        _allowances[PUBLIC_SALE_WALLET_ADDRESS][msg.sender] =
+            500_000_000 *
+            10**18;
+        _allowances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS][msg.sender] =
+            80_000_000 *
+            10**18;
+        _allowances[BOUNTY_PROGRAMS_WALLET_ADDRESS][msg.sender] =
+            70_000_000 *
+            10**18;
         _allowances[CHARITY_WALLET_ADDRESS][msg.sender] = 50_000_000 * 10**18;
     }
 
@@ -155,17 +161,28 @@ contract LivelyToken is
         return _balances[account];
     }
 
-     function firstInitializeConsensusRole(address account) 
+    /**
+     * @dev CONSENSUS_ROLE must initialize by ADMIN_ROLE only once 
+     *         
+     */
+    // solhint-disable-next-line
+    function firstInitializeConsensusRole(address account)
         public
         validateSenderRole(ADMIN_ROLE)
         validateAddress(account)
     {
         _firstInitializeConsensusRole(account);
         _allowances[PUBLIC_SALE_WALLET_ADDRESS][account] = 500_000_000 * 10**18;
-        _allowances[FOUNDING_TEAM_WALLET_ADDRESS][account] = 200_000_000 * 10**18;
-        _allowances[RESERVES_WALLET_ADDRESS][account] = 100_000_000 * 10**18;     
-        _allowances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS][account] = 80_000_000 * 10**18;     
-        _allowances[BOUNTY_PROGRAMS_WALLET_ADDRESS][account] = 70_000_000 * 10**18;
+        _allowances[FOUNDING_TEAM_WALLET_ADDRESS][account] =
+            200_000_000 *
+            10**18;
+        _allowances[RESERVES_WALLET_ADDRESS][account] = 100_000_000 * 10**18;
+        _allowances[AUDIO_VIDEO_PRODUCTIONS_WALLET_ADDRESS][account] =
+            80_000_000 *
+            10**18;
+        _allowances[BOUNTY_PROGRAMS_WALLET_ADDRESS][account] =
+            70_000_000 *
+            10**18;
         _allowances[CHARITY_WALLET_ADDRESS][account] = 50_000_000 * 10**18;
     }
 
@@ -173,7 +190,7 @@ contract LivelyToken is
      * @dev See {IFreezable-freezeOf}.
      */
     // TODO test for address(0x0)
-    function freezeOf(address account) external view returns (uint256) {
+    function freezeOf(address account) external override view returns (uint256) {
         return _freezes[account];
     }
 
@@ -330,7 +347,7 @@ contract LivelyToken is
         return true;
     }
 
-     /**
+    /**
      * @dev See {IERC20Sec-transferFromSec}.
      */
     function transferFromSec(
@@ -398,6 +415,7 @@ contract LivelyToken is
         uint256 value
     )
         external
+        override
         whenNotPaused
         whenNotPausedOf(msg.sender)
         validateSenderAccount
@@ -409,7 +427,12 @@ contract LivelyToken is
             revert IllegalAllowanceError();
         _allowances[msg.sender][spender] = currentAllowanceAccount + value;
 
-        emit ApprovalIncSec(msg.sender, spender, currentAllowanceAccount, value);
+        emit ApprovalIncSec(
+            msg.sender,
+            spender,
+            currentAllowanceAccount,
+            value
+        );
         return true;
     }
 
@@ -422,6 +445,7 @@ contract LivelyToken is
         uint256 value
     )
         external
+        override
         whenNotPaused
         whenNotPausedOf(msg.sender)
         validateSenderAccount
@@ -436,7 +460,12 @@ contract LivelyToken is
             _allowances[msg.sender][spender] = currentAllowanceAccount - value;
         }
 
-        emit ApprovalDecSec(msg.sender, spender, currentAllowanceAccount, value);
+        emit ApprovalDecSec(
+            msg.sender,
+            spender,
+            currentAllowanceAccount,
+            value
+        );
         return true;
     }
 
@@ -466,10 +495,16 @@ contract LivelyToken is
 
         if (_totalSupply != currentTotalSupply)
             revert IllegalTotalSupplyError();
-            
+
         _totalSupply += amount;
         _balances[account] += amount;
-        emit Mint(msg.sender, account, currentAccountBalance, currentTotalSupply, amount);
+        emit Mint(
+            msg.sender,
+            account,
+            currentAccountBalance,
+            currentTotalSupply,
+            amount
+        );
     }
 
     /**
@@ -608,7 +643,10 @@ contract LivelyToken is
         return newFreezeBalance;
     }
 
-    // experimental
+    /**
+     * @dev See withdraw balance of contract by CONSENSUS_ROLE
+     */
+    // solhint-disable-next-line
     function withdrawContractBalance(address recepient)
         external
         validateSenderRole(CONSENSUS_ROLE)
@@ -616,7 +654,9 @@ contract LivelyToken is
         payable(recepient).transfer(address(this).balance);
     }
 
+     // solhint-disable-next-line
     receive() external payable {}
 
+     // solhint-disable-next-line
     fallback() external payable {}
 }

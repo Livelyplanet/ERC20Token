@@ -2,16 +2,26 @@
 pragma solidity 0.8.10;
 
 interface IPausable {
+  
+    /**
+     * @dev Emitted when the pause is triggered by `account`.
+     */
+    event Paused(address indexed sender, address indexed account);
 
     /**
-     * @dev Returns true if the account is paused, and false otherwise.
+     * @dev Emitted when the pause is lifted by `account`.
      */
-    function pausedOf(address account) external view returns (bool);
+    event Unpaused(address indexed sender, address indexed account);
 
     /**
-     * @dev Returns true if the contract is paused, and false otherwise.
+     * @dev Emitted when the pauseAll is triggered by `account`.
      */
-    function paused() external view returns (bool);
+    event PausedAll(address indexed sender);
+
+    /**
+     * @dev Emitted when the pauseAll is lifted by `account`.
+     */
+    event UnpausedAll(address indexed sender);
 
     /**
      * @dev Triggers stopped state.
@@ -50,22 +60,12 @@ interface IPausable {
     function unpauseAll() external;
 
     /**
-     * @dev Emitted when the pause is triggered by `account`.
+     * @dev Returns true if the account is paused, and false otherwise.
      */
-    event Paused(address indexed sender, address indexed account);
+    function pausedOf(address account) external view returns (bool);
 
     /**
-     * @dev Emitted when the pause is lifted by `account`.
+     * @dev Returns true if the contract is paused, and false otherwise.
      */
-    event Unpaused(address indexed sender, address indexed account);
-
-     /**
-     * @dev Emitted when the pauseAll is triggered by `account`.
-     */
-    event PausedAll(address indexed sender);
-
-    /**
-     * @dev Emitted when the pauseAll is lifted by `account`.
-     */
-    event UnpausedAll(address indexed sender);
+    function paused() external view returns (bool);
 }

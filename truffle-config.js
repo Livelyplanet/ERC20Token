@@ -28,7 +28,8 @@ const HDWalletProvider = require('@truffle/hdwallet-provider');
 // like the mnemomic and Infura project key below. Note: .env is ignored by git to keep your private information safe
 require('dotenv').config();
 const mnemonic = process.env["MNEMONIC"];
-const alchemyApiUrl = process.env["API_URL"];
+const alchemyApiMumbaiUrl = process.env["API_URL"];
+const alchemyApiMainnetUrl = process.env["MAINNET_API_URL"];
 const privateKey = process.env["PRIVATE_KEY"];
 
 module.exports = {
@@ -71,7 +72,7 @@ module.exports = {
         //   phrase: mnemonic
         // },
         privateKeys: [privateKey],
-        providerOrUrl:alchemyApiUrl,
+        providerOrUrl:alchemyApiMumbaiUrl,
         address_index: 0,
         num_addresses: 10,
         shareNonce: true,
@@ -79,6 +80,29 @@ module.exports = {
         wallet_hdpath: "m/44'/60'/0'/0/"
       }),
       network_id: 80001,   // Mumbai
+      gas: 6000000,
+      gasPrice: 10000000000,
+      confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true,   // Skip dry run before migrations? (default: false for public nets )
+      networkCheckTimeout: 100000,
+      deploymentPollingInterval: 10000
+      // from: '0xC27383068386C5753458Aac21Ca22029379bCBec', // 
+    },
+    polygon_mainnet: {
+      provider: () => new HDWalletProvider({
+        // mnemonic: {
+        //   phrase: mnemonic
+        // },
+        privateKeys: [privateKey],
+        providerOrUrl:alchemyApiMainnetUrl,
+        address_index: 0,
+        num_addresses: 10,
+        shareNonce: true,
+        pollingInterval: 12000,
+        wallet_hdpath: "m/44'/60'/0'/0/"
+      }),
+      network_id: 137,   // polygon
       gas: 6000000,
       gasPrice: 10000000000,
       confirmations: 2,    // # of confs to wait between deployments. (default: 0)
@@ -132,5 +156,9 @@ module.exports = {
 
   db: {
     enabled: false
-  }
+  },
+
+  // Support test coverage
+  plugins: ["solidity-coverage"]
+  
 };
