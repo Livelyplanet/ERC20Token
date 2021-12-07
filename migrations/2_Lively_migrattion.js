@@ -1,5 +1,5 @@
-const LivelyToken = artifacts.require("LivelyToken")
+const LivelyToken = artifacts.require("LivelyToken");
 
-module.exports = function(deployer) {
-    deployer.deploy(LivelyToken)
-}
+module.exports = function (deployer) {
+  deployer.deploy(LivelyToken);
+};
