@@ -7,7 +7,6 @@ pragma solidity 0.8.10;
  * recognized off-chain (via event analysis).
  */
 interface IBurnable {
-
     /**
      * @dev Emitted when the burnFrom of a `amount` for an `account` from caller is set by
      * a call to {burn}.

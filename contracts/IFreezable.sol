@@ -6,7 +6,7 @@ pragma solidity 0.8.10;
  * in a way that can be recognized off-chain (via event analysis).
  */
 interface IFreezable {
-       /**
+    /**
      * @dev Emitted when the freeze of a `amount` for an `account` is set by
      * a call to {freeze}.
      * `amount` add to the freeze account and subtracted from balance of account.

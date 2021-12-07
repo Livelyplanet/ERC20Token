@@ -2,7 +2,6 @@
 pragma solidity 0.8.10;
 
 interface IPausable {
-  
     /**
      * @dev Emitted when the pause is triggered by `account`.
      */

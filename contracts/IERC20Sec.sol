@@ -2,8 +2,7 @@
 pragma solidity 0.8.10;
 
 interface IERC20Sec {
-
-       /**
+    /**
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by
      * a call to {approve}.
      * `value` is the new allowance and `oldValue` is the old allowance.
@@ -127,5 +126,5 @@ interface IERC20Sec {
         address recipient,
         uint256 currentBalance,
         uint256 amount
-    ) external returns (bool); 
+    ) external returns (bool);
 }

@@ -162,8 +162,8 @@ contract LivelyToken is
     }
 
     /**
-     * @dev CONSENSUS_ROLE must initialize by ADMIN_ROLE only once 
-     *         
+     * @dev CONSENSUS_ROLE must initialize by ADMIN_ROLE only once
+     *
      */
     // solhint-disable-next-line
     function firstInitializeConsensusRole(address account)
@@ -190,7 +190,12 @@ contract LivelyToken is
      * @dev See {IFreezable-freezeOf}.
      */
     // TODO test for address(0x0)
-    function freezeOf(address account) external override view returns (uint256) {
+    function freezeOf(address account)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _freezes[account];
     }
 
@@ -654,9 +659,9 @@ contract LivelyToken is
         payable(recepient).transfer(address(this).balance);
     }
 
-     // solhint-disable-next-line
+    // solhint-disable-next-line
     receive() external payable {}
 
-     // solhint-disable-next-line
+    // solhint-disable-next-line
     fallback() external payable {}
 }

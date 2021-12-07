@@ -25,7 +25,7 @@ abstract contract Pausable is IPausable, AccessControl {
      */
     mapping(address => bool) private _pauses;
 
-        /**
+    /**
      * @dev Modifier to make a function callable only when the contract is not paused.
      *
      * Requirements:
@@ -87,7 +87,7 @@ abstract contract Pausable is IPausable, AccessControl {
         _isContractPaused = false;
     }
 
-      /**
+    /**
      * @dev See {IPausable-pause}.
      */
     function pause(address account)

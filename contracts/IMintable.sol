@@ -2,7 +2,6 @@
 pragma solidity 0.8.10;
 
 interface IMintable {
-
     /**
      * @dev Emitted when the mint of a `amount` for an `account` is set by
      * a call to {mint}.

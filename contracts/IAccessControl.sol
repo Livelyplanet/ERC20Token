@@ -5,7 +5,6 @@ pragma solidity 0.8.10;
  * @dev External interface of AccessControl declared to support ERC165 detection.
  */
 interface IAccessControl {
-
     /**
      * @dev Emitted when `account` is granted `role`.
      *
@@ -32,7 +31,7 @@ interface IAccessControl {
         address indexed account
     );
 
-     /**
+    /**
      * @dev Grants `role` to `account`.
      *
      * If `account` had not been already granted `role`, emits a {RoleGranted}
@@ -65,5 +64,5 @@ interface IAccessControl {
     function hasRole(bytes32 role, address account)
         external
         view
-        returns (bool);   
+        returns (bool);
 }

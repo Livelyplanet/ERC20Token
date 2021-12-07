@@ -233,7 +233,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
      *  - an address where a contract lived, but was destroyed
      * ====
      */
-     /* solhint-disable */
+    /* solhint-disable */
     function _isContract(address account) private view returns (bool) {
         // This method relies on extcodesize, which returns 0 for contracts in
         // construction, since the code is only stored at the end of the
@@ -245,6 +245,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         }
         return size > 0;
     }
+
     /* solhint-enable */
 
     /**

@@ -65,7 +65,6 @@ interface IERC20 {
      */
     function approve(address spender, uint256 amount) external returns (bool);
 
-
     /**
      * @dev Returns the remaining number of tokens that `spender` will be
      * allowed to spend on behalf of `owner` through {transferFrom}. This is
@@ -78,7 +77,6 @@ interface IERC20 {
         view
         returns (uint256);
 
-   
     /**
      * @dev Returns the name of the token.
      */
@@ -103,5 +101,4 @@ interface IERC20 {
      * @dev Returns the amount of tokens owned by `account`.
      */
     function balanceOf(address account) external view returns (uint256);
-
 }
