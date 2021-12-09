@@ -1,11 +1,7 @@
 const assert = require("chai").assert;
 
 const LivelyToken = artifacts.require("LivelyToken");
-
-// const ADMIN_ROLE = web3.utils.keccak256("ADMIN_ROLE");
-// const BURNABLE_ROLE = web3.utils.keccak256("BURNABLE_ROLE");
-// const CONSENSUS_ROLE = web3.utils.keccak256("CONSENSUS_ROLE");
-// const NONE_ROLE = web3.utils.keccak256("NONE_ROLE");
+const RelayContract = artifacts.require("Relay");
 
 const PUBLIC_SALE_WALLET = "0x7eA3cFefA2b13e493110EdEd87e2Ba72C115BEc1";
 const FOUNDING_TEAM_WALLET_ADDRESS =
@@ -14,12 +10,14 @@ const decimal = new web3.utils.BN("1000000000000000000");
 
 contract("Wallet", (accounts) => {
   let lively;
+  let relay;
 
   before(async () => {
     lively = await LivelyToken.deployed();
+    relay = await RelayContract.new(lively.address);
 
     // init consensus role
-    await lively.firstInitializeConsensusRole(accounts[1]);
+    await lively.firstInitializeConsensusRole(relay.address);
   });
 
   it("Should ADMIN_ROLE transfer token from permited wallet to account", async () => {
@@ -80,12 +78,19 @@ contract("Wallet", (accounts) => {
 
   it("Should CONSENSUS_ROLE transfer token from PUBLIC_SALE_WALLET to account", async () => {
     // given
-    const allowance = await lively.allowance(PUBLIC_SALE_WALLET, accounts[1]);
+    const allowance = await lively.allowance(PUBLIC_SALE_WALLET, relay.address);
     const balance = await lively.balanceOf(accounts[5]);
 
     // when
-    await lively.transferFrom(PUBLIC_SALE_WALLET, accounts[5], 1000, {
+    const requestObj = await lively.transferFrom.request(
+      PUBLIC_SALE_WALLET,
+      accounts[5],
+      1000
+    );
+    await web3.eth.sendTransaction({
       from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
     });
 
     // then
@@ -96,7 +101,7 @@ contract("Wallet", (accounts) => {
     );
 
     // and
-    let result = await lively.allowance(PUBLIC_SALE_WALLET, accounts[1]);
+    let result = await lively.allowance(PUBLIC_SALE_WALLET, relay.address);
     assert.equal(
       result.toString(),
       allowance.sub(new web3.utils.BN(1000)).toString()
@@ -114,13 +119,20 @@ contract("Wallet", (accounts) => {
     // given
     const allowance = await lively.allowance(
       FOUNDING_TEAM_WALLET_ADDRESS,
-      accounts[1]
+      relay.address
     );
     const balance = await lively.balanceOf(accounts[6]);
 
     // when
-    await lively.transferFrom(FOUNDING_TEAM_WALLET_ADDRESS, accounts[6], 1000, {
+    const requestObj = await lively.transferFrom.request(
+      FOUNDING_TEAM_WALLET_ADDRESS,
+      accounts[6],
+      1000
+    );
+    await web3.eth.sendTransaction({
       from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
     });
 
     // then
@@ -133,7 +145,7 @@ contract("Wallet", (accounts) => {
     // and
     let result = await lively.allowance(
       FOUNDING_TEAM_WALLET_ADDRESS,
-      accounts[1]
+      relay.address
     );
     assert.equal(
       result.toString(),

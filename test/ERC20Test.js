@@ -1,25 +1,20 @@
 const assert = require("chai").assert;
-// const BN = require("web3-utils").BN;
 
+const RelayContract = artifacts.require("Relay");
 const LivelyToken = artifacts.require("LivelyToken");
 
-// const ADMIN_ROLE = web3.utils.keccak256("ADMIN_ROLE");
-// const BURNABLE_ROLE = web3.utils.keccak256("BURNABLE_ROLE");
-// const CONSENSUS_ROLE = web3.utils.keccak256("CONSENSUS_ROLE");
-// const NONE_ROLE = web3.utils.keccak256("NONE_ROLE");
-
 const PUBLIC_SALE_WALLET = "0x7eA3cFefA2b13e493110EdEd87e2Ba72C115BEc1";
-// const FOUNDING_TEAM_WALLET_ADDRESS =
-//   "0x001b0a8A4749C70AEAD435Cf7E6dA06A7bAd1a2d";
 
 contract("ERC20", (accounts) => {
   let lively;
+  let relay;
 
   before(async () => {
     lively = await LivelyToken.deployed();
+    relay = await RelayContract.new(lively.address);
 
     // init consensus role
-    await lively.firstInitializeConsensusRole(accounts[1]);
+    await lively.firstInitializeConsensusRole(relay.address);
 
     // init accounts 5
     await lively.transferFrom(PUBLIC_SALE_WALLET, accounts[5], 10000, {
@@ -229,7 +224,14 @@ contract("ERC20", (accounts) => {
     const accountBalance = await web3.eth.getBalance(accounts[3]);
 
     // when
-    await lively.withdrawContractBalance(accounts[3], { from: accounts[1] });
+    const requestObj = await lively.withdrawContractBalance.request(
+      accounts[3]
+    );
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
     // then
     let result = await web3.eth.getBalance(lively.address);

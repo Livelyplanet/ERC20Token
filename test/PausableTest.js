@@ -1,20 +1,18 @@
 const assert = require("chai").assert;
 
 const LivelyToken = artifacts.require("LivelyToken");
-
-// const ADMIN_ROLE = web3.utils.keccak256("ADMIN_ROLE");
-// const BURNABLE_ROLE = web3.utils.keccak256("BURNABLE_ROLE");
-// const CONSENSUS_ROLE = web3.utils.keccak256("CONSENSUS_ROLE");
-// const NONE_ROLE = web3.utils.keccak256("NONE_ROLE");
+const RelayContract = artifacts.require("Relay");
 
 contract("Pausable", (accounts) => {
   let lively;
+  let relay;
 
   before(async () => {
     lively = await LivelyToken.deployed();
+    relay = await RelayContract.new(lively.address);
 
     // init consensus role
-    await lively.firstInitializeConsensusRole(accounts[1]);
+    await lively.firstInitializeConsensusRole(relay.address);
   });
 
   it("Should ADMIN_ROLE pause an account", async () => {
@@ -90,7 +88,12 @@ contract("Pausable", (accounts) => {
     const isAccountPaused = await lively.pausedOf(accounts[9]);
 
     // when
-    await lively.pause(accounts[9], { from: accounts[1] });
+    const requestObj = await lively.pause.request(accounts[9]);
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
     // then
     assert.isNotOk(isAccountPaused);
@@ -105,7 +108,12 @@ contract("Pausable", (accounts) => {
     const isAccountPaused = await lively.pausedOf(accounts[9]);
 
     // when
-    await lively.unpause(accounts[9], { from: accounts[1] });
+    const requestObj = await lively.unpause.request(accounts[9]);
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
     // then
     assert.isOk(isAccountPaused);
@@ -120,7 +128,12 @@ contract("Pausable", (accounts) => {
     const isContractPaused = await lively.paused();
 
     // when
-    await lively.pauseAll({ from: accounts[1] });
+    const requestObj = await lively.pauseAll.request();
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
     // then
     assert.isNotOk(isContractPaused);
@@ -135,7 +148,12 @@ contract("Pausable", (accounts) => {
     const isContractPaused = await lively.paused();
 
     // when
-    await lively.unpauseAll({ from: accounts[1] });
+    const requestObj = await lively.unpauseAll.request();
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
     // then
     assert.isOk(isContractPaused);

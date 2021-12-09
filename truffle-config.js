@@ -32,6 +32,9 @@ const alchemyApiMumbaiUrl = process.env.API_URL;
 const alchemyApiMainnetUrl = process.env.MAINNET_API_URL;
 const privateKey = process.env.PRIVATE_KEY;
 
+const alchemyApiRopstenUrl = process.env.ROPSTEN_API_KEY;
+const ropstenPrivateKey = process.env.PRIVATE_KEY_ROPSTEN;
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -114,14 +117,26 @@ module.exports = {
       deploymentPollingInterval: 10000,
       // from: '0xC27383068386C5753458Aac21Ca22029379bCBec', //
     },
-    // ropsten: {
-    // provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/YOUR-PROJECT-ID`),
-    // network_id: 3,       // Ropsten's id
-    // gas: 5500000,        // Ropsten has a lower block limit than mainnet
-    // confirmations: 2,    // # of confs to wait between deployments. (default: 0)
-    // timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
-    // skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
-    // },
+    ropsten: {
+      // provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/YOUR-PROJECT-ID`),
+      provider: () =>
+        new HDWalletProvider({
+          privateKeys: [ropstenPrivateKey],
+          providerOrUrl: alchemyApiRopstenUrl,
+          address_index: 0,
+          num_addresses: 10,
+          shareNonce: true,
+          pollingInterval: 12000,
+          wallet_hdpath: "m/44'/60'/0'/0/",
+        }),
+      network_id: 3, // Ropsten's id
+      gas: 5500000, // Ropsten has a lower block limit than mainnet
+      confirmations: 2, // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
+      networkCheckTimeout: 100000,
+      deploymentPollingInterval: 10000,
+    },
     // Useful for private networks
     // private: {
     // provider: () => new HDWalletProvider(mnemonic, `https://network.io`),

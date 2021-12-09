@@ -1,11 +1,7 @@
 const assert = require("chai").assert;
 
 const LivelyToken = artifacts.require("LivelyToken");
-
-// const ADMIN_ROLE = web3.utils.keccak256("ADMIN_ROLE");
-// const BURNABLE_ROLE = web3.utils.keccak256("BURNABLE_ROLE");
-// const CONSENSUS_ROLE = web3.utils.keccak256("CONSENSUS_ROLE");
-// const NONE_ROLE = web3.utils.keccak256("NONE_ROLE");
+const RelayContract = artifacts.require("Relay");
 
 const PUBLIC_SALE_WALLET = "0x7eA3cFefA2b13e493110EdEd87e2Ba72C115BEc1";
 
@@ -13,12 +9,14 @@ const decimal = new web3.utils.BN("1000000000000000000");
 
 contract("Freezable", (accounts) => {
   let lively;
+  let relay;
 
   before(async () => {
     lively = await LivelyToken.deployed();
+    relay = await RelayContract.new(lively.address);
 
     // init consensus role
-    await lively.firstInitializeConsensusRole(accounts[1]);
+    await lively.firstInitializeConsensusRole(relay.address);
   });
 
   it("Should CONSENSUS_ROLE freezeFrom token from account", async () => {
@@ -27,8 +25,15 @@ contract("Freezable", (accounts) => {
     const balance = await lively.balanceOf(PUBLIC_SALE_WALLET);
 
     // when
-    await lively.freezeFrom(PUBLIC_SALE_WALLET, freezeBalance, 1000, {
+    const requestObj = await lively.freezeFrom.request(
+      PUBLIC_SALE_WALLET,
+      freezeBalance,
+      1000
+    );
+    await web3.eth.sendTransaction({
       from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
     });
 
     // then
@@ -59,8 +64,15 @@ contract("Freezable", (accounts) => {
     const balance = await lively.balanceOf(PUBLIC_SALE_WALLET);
 
     // when
-    await lively.unfreezeFrom(PUBLIC_SALE_WALLET, freezeBalance, 1000, {
+    const requestObj = await lively.unfreezeFrom.request(
+      PUBLIC_SALE_WALLET,
+      freezeBalance,
+      1000
+    );
+    await web3.eth.sendTransaction({
       from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
     });
 
     // then
@@ -92,12 +104,24 @@ contract("Freezable", (accounts) => {
     // given
     const freezeBalance = await lively.freezeOf(PUBLIC_SALE_WALLET);
     const balance = await lively.balanceOf(PUBLIC_SALE_WALLET);
-    await lively.pause(PUBLIC_SALE_WALLET, { from: accounts[1] });
+    let requestObj = await lively.pause.request(PUBLIC_SALE_WALLET);
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
     // when
     try {
-      await lively.freezeFrom(PUBLIC_SALE_WALLET, freezeBalance, 1000, {
+      requestObj = await lively.freezeFrom.request(
+        PUBLIC_SALE_WALLET,
+        freezeBalance,
+        1000
+      );
+      await web3.eth.sendTransaction({
         from: accounts[1],
+        to: relay.address,
+        data: requestObj.data,
       });
     } catch (error) {}
 
@@ -121,12 +145,24 @@ contract("Freezable", (accounts) => {
     // given
     const freezeBalance = await lively.freezeOf(PUBLIC_SALE_WALLET);
     const balance = await lively.balanceOf(PUBLIC_SALE_WALLET);
-    await lively.pauseAll({ from: accounts[1] });
+    let requestObj = await lively.pauseAll.request();
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
     // when
     try {
-      await lively.freezeFrom(PUBLIC_SALE_WALLET, freezeBalance, 1000, {
+      requestObj = await lively.freezeFrom(
+        PUBLIC_SALE_WALLET,
+        freezeBalance,
+        1000
+      );
+      await web3.eth.sendTransaction({
         from: accounts[1],
+        to: relay.address,
+        data: requestObj.data,
       });
     } catch (error) {}
 
@@ -150,11 +186,21 @@ contract("Freezable", (accounts) => {
     // given
     const freezeBalance = await lively.freezeOf(accounts[1]);
     const balance = await lively.balanceOf(accounts[1]);
-    await lively.unpauseAll({ from: accounts[1] });
+    let requestObj = await lively.unpauseAll.request();
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
-    // whenadd
+    // when
     try {
-      await lively.freeze(freezeBalance, 1000, { from: accounts[1] });
+      requestObj = await lively.freeze.request(freezeBalance, 1000);
+      await web3.eth.sendTransaction({
+        from: accounts[1],
+        to: relay.address,
+        data: requestObj.data,
+      });
     } catch (error) {
       // console.trace(error)
     }
@@ -174,19 +220,31 @@ contract("Freezable", (accounts) => {
 
   it("Should CONSENSUS_ROLE transfer token from wallet to itself account ", async () => {
     // given
-    const balance = await lively.balanceOf(accounts[1]);
-    await lively.unpause(PUBLIC_SALE_WALLET, { from: accounts[1] });
+    const balance = await lively.balanceOf(relay.address);
+    let requestObj = await lively.unpause.request(PUBLIC_SALE_WALLET);
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
     // when
-    await lively.transferFrom(PUBLIC_SALE_WALLET, accounts[1], 1000, {
+    requestObj = await lively.transferFrom.request(
+      PUBLIC_SALE_WALLET,
+      relay.address,
+      1000
+    );
+    await web3.eth.sendTransaction({
       from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
     });
 
     // then
     assert.equal(balance.toString(), "0");
 
     // and
-    const result = await lively.balanceOf(accounts[1]);
+    const result = await lively.balanceOf(relay.address);
     assert.equal(
       result.toString(),
       balance.add(new web3.utils.BN(1000)).toString()
@@ -195,25 +253,30 @@ contract("Freezable", (accounts) => {
 
   it("Should CONSENSUS_ROLE freeze token from account", async () => {
     // given
-    const freezeBalance = await lively.freezeOf(accounts[1]);
-    const balance = await lively.balanceOf(accounts[1]);
+    const freezeBalance = await lively.freezeOf(relay.address);
+    const balance = await lively.balanceOf(relay.address);
 
     // when
-    await lively.freeze(freezeBalance, 1000, { from: accounts[1] });
+    const requestObj = await lively.freeze.request(freezeBalance, 1000);
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
     // then
     assert.equal(freezeBalance.toString(), "0");
     assert.equal(balance.toString(), "1000");
 
     // and
-    let result = await lively.freezeOf(accounts[1]);
+    let result = await lively.freezeOf(relay.address);
     assert.equal(
       result.toString(),
       freezeBalance.add(new web3.utils.BN(1000)).toString()
     );
 
     // and
-    result = await lively.balanceOf(accounts[1]);
+    result = await lively.balanceOf(relay.address);
     assert.equal(
       result.toString(),
       balance.sub(new web3.utils.BN(1000)).toString()
@@ -222,25 +285,30 @@ contract("Freezable", (accounts) => {
 
   it("Should CONSENSUS_ROLE unfreeze token from account", async () => {
     // given
-    const freezeBalance = await lively.freezeOf(accounts[1]);
-    const balance = await lively.balanceOf(accounts[1]);
+    const freezeBalance = await lively.freezeOf(relay.address);
+    const balance = await lively.balanceOf(relay.address);
 
     // when
-    await lively.unfreeze(freezeBalance, 1000, { from: accounts[1] });
+    const requestObj = await lively.unfreeze.request(freezeBalance, 1000);
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
     // then
     assert.equal(freezeBalance.toString(), "1000");
     assert.equal(balance.toString(), "0");
 
     // and
-    let result = await lively.freezeOf(accounts[1]);
+    let result = await lively.freezeOf(relay.address);
     assert.equal(
       result.toString(),
       freezeBalance.sub(new web3.utils.BN(1000)).toString()
     );
 
     // and
-    result = await lively.balanceOf(accounts[1]);
+    result = await lively.balanceOf(relay.address);
     assert.equal(
       result.toString(),
       balance.add(new web3.utils.BN(1000)).toString()
