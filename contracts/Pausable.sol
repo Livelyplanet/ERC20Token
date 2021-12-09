@@ -9,13 +9,12 @@ import "./IPausable.sol";
  * mechanism that can be triggered by an authorized account.
  *
  * This module is used through inheritance. It will make available the
- * modifiers `whenNotPaused`,`whenPaused`, `whenNotPausedOf` and `whenPausedOf`, 
+ * modifiers `whenNotPaused`,`whenPaused`, `whenNotPausedOf` and `whenPausedOf`,
  * which can be applied to the functions of your contract.
  * Note that they will not be pausable by
  * simply including this module, only once the modifiers are put in place.
  */
-abstract contract Pausable is IPausable, AccessControl {   
-    
+abstract contract Pausable is IPausable, AccessControl {
     /**
      * @dev _isContractPaused used for contract pause state
      */
@@ -27,13 +26,6 @@ abstract contract Pausable is IPausable, AccessControl {
     mapping(address => bool) private _pauses;
 
     /**
-     * @dev Initializes the contract in unpaused state.
-     */
-    constructor() {        
-        _isContractPaused = false;
-    }
-
-    /**
      * @dev Modifier to make a function callable only when the contract is not paused.
      *
      * Requirements:
@@ -41,7 +33,7 @@ abstract contract Pausable is IPausable, AccessControl {
      * - The contract must not be paused.
      */
     modifier whenNotPaused() {
-        if(paused()) revert ForbiddenError(msg.sender);
+        if (paused()) revert ForbiddenError(msg.sender);
         _;
     }
 
@@ -53,7 +45,7 @@ abstract contract Pausable is IPausable, AccessControl {
      * - The contract must be paused.
      */
     modifier whenPaused() {
-        if(!paused()) revert ForbiddenError(msg.sender);
+        if (!paused()) revert ForbiddenError(msg.sender);
         _;
     }
 
@@ -62,7 +54,7 @@ abstract contract Pausable is IPausable, AccessControl {
      * // TODO Gas optimization check
      */
     modifier whenNotPausedOf(address account) {
-        if(pausedOf(account)) revert ForbiddenError(account);
+        if (pausedOf(account)) revert ForbiddenError(account);
         _;
     }
 
@@ -70,43 +62,38 @@ abstract contract Pausable is IPausable, AccessControl {
      * @dev Modifier to make a function callable only when the account is not paused.
      * // TODO Gas optimization check
      */
-    modifier whenNotAccountsPausedOf(address firstAccount, address secondAccount) {
-        if(pausedOf(firstAccount)) revert ForbiddenError(firstAccount);
-        if(pausedOf(secondAccount)) revert ForbiddenError(secondAccount);
+    modifier whenNotAccountsPausedOf(
+        address firstAccount,
+        address secondAccount
+    ) {
+        if (pausedOf(firstAccount)) revert ForbiddenError(firstAccount);
+        if (pausedOf(secondAccount)) revert ForbiddenError(secondAccount);
         _;
     }
-
 
     /**
      * @dev Modifier to make a function callable only when the account is paused.
      * // TODO Gas optimization check
      */
     modifier whenPausedOf(address account) {
-        if(!pausedOf(account)) revert ForbiddenError(account);
+        if (!pausedOf(account)) revert ForbiddenError(account);
         _;
     }
 
     /**
-     * @dev See {IPausable-paused}.
+     * @dev Initializes the contract in unpaused state.
      */
-    function paused() public view override returns (bool) {
-        return _isContractPaused;
-    }
-
-    /**
-     * @dev See {IPausable-pausedOf}.
-     */
-    function pausedOf(address account) public view returns (bool) {
-        return _pauses[account];
+    constructor() {
+        _isContractPaused = false;
     }
 
     /**
      * @dev See {IPausable-pause}.
      */
-    function pause(address account) 
-        external 
-        override 
-        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE) 
+    function pause(address account)
+        external
+        override
+        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE)
         validateAddress(account)
     {
         _pauses[account] = true;
@@ -116,10 +103,10 @@ abstract contract Pausable is IPausable, AccessControl {
     /**
      * @dev See {IPausable-unpause}.
      */
-    function unpause(address account) 
-        external  
+    function unpause(address account)
+        external
         override
-        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE) 
+        validateSenderRoles(CONSENSUS_ROLE, ADMIN_ROLE)
         validateAddress(account)
     {
         _pauses[account] = false;
@@ -143,15 +130,31 @@ abstract contract Pausable is IPausable, AccessControl {
     }
 
     /**
+     * @dev See {IPausable-paused}.
+     */
+    function paused() public view override returns (bool) {
+        return _isContractPaused;
+    }
+
+    /**
+     * @dev See {IPausable-pausedOf}.
+     */
+    function pausedOf(address account) public view returns (bool) {
+        return _pauses[account];
+    }
+
+    /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) 
-        public 
-        view 
-        virtual 
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
         override
-        returns (bool) 
+        returns (bool)
     {
-        return interfaceId == type(IPausable).interfaceId || super.supportsInterface(interfaceId);
+        return
+            interfaceId == type(IPausable).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 }

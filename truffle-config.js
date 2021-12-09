@@ -23,13 +23,17 @@
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
-const HDWalletProvider = require('@truffle/hdwallet-provider');
+const HDWalletProvider = require("@truffle/hdwallet-provider");
 // create a file at the root of your project and name it .env -- there you can set process variables
 // like the mnemomic and Infura project key below. Note: .env is ignored by git to keep your private information safe
-require('dotenv').config();
-const mnemonic = process.env["MNEMONIC"];
-const alchemyApiUrl = process.env["API_URL"];
-const privateKey = process.env["PRIVATE_KEY"];
+require("dotenv").config();
+// const mnemonic = process.env.MNEMONIC;
+const alchemyApiMumbaiUrl = process.env.API_URL;
+const alchemyApiMainnetUrl = process.env.MAINNET_API_URL;
+const privateKey = process.env.PRIVATE_KEY;
+
+const alchemyApiRopstenUrl = process.env.ROPSTEN_API_KEY;
+const ropstenPrivateKey = process.env.PRIVATE_KEY_ROPSTEN;
 
 module.exports = {
   /**
@@ -50,9 +54,9 @@ module.exports = {
     // options below to some value.
     //
     development: {
-     host: "127.0.0.1",     // Localhost (default: none)
-     port: 7545,            // Standard Ethereum port (default: none)
-     network_id: "*",       // Any network (default: none)
+      host: "127.0.0.1", // Localhost (default: none)
+      port: 7545, // Standard Ethereum port (default: none)
+      network_id: "*", // Any network (default: none)
     },
     // Another network with more advanced options...
     // advanced: {
@@ -66,36 +70,73 @@ module.exports = {
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
     polygon_testnet_mumbai: {
-      provider: () => new HDWalletProvider({
-        // mnemonic: {
-        //   phrase: mnemonic
-        // },
-        privateKeys: [privateKey],
-        providerOrUrl:alchemyApiUrl,
-        address_index: 0,
-        num_addresses: 10,
-        shareNonce: true,
-        pollingInterval: 12000,
-        wallet_hdpath: "m/44'/60'/0'/0/"
-      }),
-      network_id: 80001,   // Mumbai
+      provider: () =>
+        new HDWalletProvider({
+          // mnemonic: {
+          //   phrase: mnemonic
+          // },
+          privateKeys: [privateKey],
+          providerOrUrl: alchemyApiMumbaiUrl,
+          address_index: 0,
+          num_addresses: 10,
+          shareNonce: true,
+          pollingInterval: 12000,
+          wallet_hdpath: "m/44'/60'/0'/0/",
+        }),
+      network_id: 80001, // Mumbai
       gas: 6000000,
       gasPrice: 10000000000,
-      confirmations: 2,    // # of confs to wait between deployments. (default: 0)
-      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
-      skipDryRun: true,   // Skip dry run before migrations? (default: false for public nets )
+      confirmations: 2, // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
       networkCheckTimeout: 100000,
-      deploymentPollingInterval: 10000
-      // from: '0xC27383068386C5753458Aac21Ca22029379bCBec', // 
+      deploymentPollingInterval: 10000,
+      // from: '0xC27383068386C5753458Aac21Ca22029379bCBec', //
     },
-    // ropsten: {
-    // provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/YOUR-PROJECT-ID`),
-    // network_id: 3,       // Ropsten's id
-    // gas: 5500000,        // Ropsten has a lower block limit than mainnet
-    // confirmations: 2,    // # of confs to wait between deployments. (default: 0)
-    // timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
-    // skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
-    // },
+    polygon_mainnet: {
+      provider: () =>
+        new HDWalletProvider({
+          // mnemonic: {
+          //   phrase: mnemonic
+          // },
+          privateKeys: [privateKey],
+          providerOrUrl: alchemyApiMainnetUrl,
+          address_index: 0,
+          num_addresses: 10,
+          shareNonce: true,
+          pollingInterval: 12000,
+          wallet_hdpath: "m/44'/60'/0'/0/",
+        }),
+      network_id: 137, // polygon
+      gas: 6000000,
+      gasPrice: 10000000000,
+      confirmations: 2, // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
+      networkCheckTimeout: 100000,
+      deploymentPollingInterval: 10000,
+      // from: '0xC27383068386C5753458Aac21Ca22029379bCBec', //
+    },
+    ropsten: {
+      // provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/YOUR-PROJECT-ID`),
+      provider: () =>
+        new HDWalletProvider({
+          privateKeys: [ropstenPrivateKey],
+          providerOrUrl: alchemyApiRopstenUrl,
+          address_index: 0,
+          num_addresses: 10,
+          shareNonce: true,
+          pollingInterval: 12000,
+          wallet_hdpath: "m/44'/60'/0'/0/",
+        }),
+      network_id: 3, // Ropsten's id
+      gas: 5500000, // Ropsten has a lower block limit than mainnet
+      confirmations: 2, // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
+      networkCheckTimeout: 100000,
+      deploymentPollingInterval: 10000,
+    },
     // Useful for private networks
     // private: {
     // provider: () => new HDWalletProvider(mnemonic, `https://network.io`),
@@ -112,16 +153,17 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.8.10",    // Fetch exact version from solc-bin (default: truffle's version)
+      version: "0.8.10", // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
-      settings: {          // See the solidity docs for advice about optimization and evmVersion
-       optimizer: {
-         enabled: true,
-         runs: 200
-       },
-       evmVersion: "byzantium"
-      }
-    }
+      settings: {
+        // See the solidity docs for advice about optimization and evmVersion
+        optimizer: {
+          enabled: true,
+          runs: 200,
+        },
+        evmVersion: "byzantium",
+      },
+    },
   },
 
   // Truffle DB is currently disabled by default; to enable it, change enabled: false to enabled: true
@@ -131,6 +173,9 @@ module.exports = {
   // $ truffle migrate --reset --compile-all
 
   db: {
-    enabled: false
-  }
+    enabled: false,
+  },
+
+  // Support test coverage
+  plugins: ["solidity-coverage"],
 };

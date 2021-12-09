@@ -1,236 +1,241 @@
 const assert = require("chai").assert;
 
-const LivelyToken = artifacts.require("LivelyToken")
+const LivelyToken = artifacts.require("LivelyToken");
+const RelayContract = artifacts.require("Relay");
 
-const ADMIN_ROLE = web3.utils.keccak256("ADMIN_ROLE")
-const BURNABLE_ROLE = web3.utils.keccak256("BURNABLE_ROLE")
-const CONSENSUS_ROLE = web3.utils.keccak256("CONSENSUS_ROLE")
-const NONE_ROLE = web3.utils.keccak256("NONE_ROLE")
+contract("Pausable", (accounts) => {
+  let lively;
+  let relay;
 
-contract('Pausable', (accounts) => {
+  before(async () => {
+    lively = await LivelyToken.deployed();
+    relay = await RelayContract.new(lively.address);
 
-    let lively;
+    // init consensus role
+    await lively.firstInitializeConsensusRole(relay.address);
+  });
 
-    before(async() => {
-        lively = await LivelyToken.deployed()
+  it("Should ADMIN_ROLE pause an account", async () => {
+    // given
+    const isAccountPaused = await lively.pausedOf(accounts[9]);
 
-        // init consensus role
-        await lively.firstInitializeConsensusRole(accounts[1]);
+    // when
+    await lively.pause(accounts[9], { from: accounts[0] });
+
+    // then
+    assert.isNotOk(isAccountPaused);
+
+    // and
+    const result = await lively.pausedOf(accounts[9]);
+    assert.isOk(result);
+  });
+
+  it("Should ADMIN_ROLE unpause an account", async () => {
+    // given
+    const isAccountPaused = await lively.pausedOf(accounts[9]);
+
+    // when
+    await lively.unpause(accounts[9], { from: accounts[0] });
+
+    // then
+    assert.isOk(isAccountPaused);
+
+    // and
+    const result = await lively.pausedOf(accounts[9]);
+    assert.isNotOk(result);
+  });
+
+  it("Should ADMIN_ROLE could not pause contract", async () => {
+    // given
+    const isContractPaused = await lively.paused();
+
+    // when
+    try {
+      await lively.pauseAll({ from: accounts[0] });
+    } catch (error) {
+      // console.trace(error)
+    }
+
+    // then
+    assert.isNotOk(isContractPaused);
+
+    // and
+    const result = await lively.paused();
+    assert.isNotOk(result);
+  });
+
+  it("Should ADMIN_ROLE could not unpause contract", async () => {
+    // given
+    const isContractPaused = await lively.paused();
+
+    // when
+    try {
+      await lively.unpauseAll({ from: accounts[0] });
+    } catch (error) {
+      // console.trace(error)
+    }
+
+    // then
+    assert.isNotOk(isContractPaused);
+
+    // and
+    const result = await lively.paused();
+    assert.isNotOk(result);
+  });
+
+  it("Should CONSENSUS_ROLE pause an account", async () => {
+    // given
+    const isAccountPaused = await lively.pausedOf(accounts[9]);
+
+    // when
+    const requestObj = await lively.pause.request(accounts[9]);
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
     });
 
-    it('Should ADMIN_ROLE pause an account', async() => {
+    // then
+    assert.isNotOk(isAccountPaused);
 
-        // given
-        const isAccountPaused = await lively.pausedOf(accounts[9])
-        
-        // when 
-        await lively.pause(accounts[9], {from: accounts[0]})
+    // and
+    const result = await lively.pausedOf(accounts[9]);
+    assert.isOk(result);
+  });
 
-        // then
-        assert.isNotOk(isAccountPaused);
+  it("Should CONSENSUS_ROLE unpause an account", async () => {
+    // given
+    const isAccountPaused = await lively.pausedOf(accounts[9]);
 
-        // and
-        let result = await lively.pausedOf(accounts[9])
-        assert.isOk(result)
-    })
+    // when
+    const requestObj = await lively.unpause.request(accounts[9]);
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
-    it('Should ADMIN_ROLE unpause an account', async() => {
+    // then
+    assert.isOk(isAccountPaused);
 
-        // given
-        const isAccountPaused = await lively.pausedOf(accounts[9])
-        
-        // when 
-        await lively.unpause(accounts[9], {from: accounts[0]})
+    // and
+    const result = await lively.pausedOf(accounts[9]);
+    assert.isNotOk(result);
+  });
 
-        // then
-        assert.isOk(isAccountPaused);
+  it("Should CONSENSUS_ROLE pause contract", async () => {
+    // given
+    const isContractPaused = await lively.paused();
 
-        // and
-        let result = await lively.pausedOf(accounts[9])
-        assert.isNotOk(result)
-    })
+    // when
+    const requestObj = await lively.pauseAll.request();
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
-    it('Should ADMIN_ROLE could not pause contract', async() => {
+    // then
+    assert.isNotOk(isContractPaused);
 
-        // given
-        const isContractPaused = await lively.paused()
-        
-        // when
-        try { 
-            await lively.pauseAll({from: accounts[0]})
-        } catch(error) {
-            // console.trace(error)
-        }
-        
-        // then
-        assert.isNotOk(isContractPaused);
+    // and
+    const result = await lively.paused();
+    assert.isOk(result);
+  });
 
-        // and
-        let result = await lively.paused()
-        assert.isNotOk(result)
-    })
+  it("Should CONSENSUS_ROLE unpause contract", async () => {
+    // given
+    const isContractPaused = await lively.paused();
 
-    it('Should ADMIN_ROLE could not unpause contract', async() => {
+    // when
+    const requestObj = await lively.unpauseAll.request();
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
-        // given
-        const isContractPaused = await lively.paused()
-        
-        // when
-        try { 
-          await lively.unpauseAll({from: accounts[0]})
-        } catch(error) {
-            // console.trace(error)
-        }
+    // then
+    assert.isOk(isContractPaused);
 
-        // then
-        assert.isNotOk(isContractPaused);
+    // and
+    const result = await lively.paused();
+    assert.isNotOk(result);
+  });
 
-        // and
-        let result = await lively.paused()
-        assert.isNotOk(result)
-    })
+  it("Should any one could not pause an account", async () => {
+    // given
+    const isAccountPaused = await lively.pausedOf(accounts[9]);
 
-    it('Should CONSENSUS_ROLE pause an account', async() => {
+    // when
+    try {
+      await lively.pause(accounts[9], { from: accounts[5] });
+    } catch (error) {
+      // console.trace(error)
+    }
 
-        // given
-        const isAccountPaused = await lively.pausedOf(accounts[9])
-        
-        // when 
-        await lively.pause(accounts[9], {from: accounts[1]})
+    // then
+    assert.isNotOk(isAccountPaused);
 
-        // then
-        assert.isNotOk(isAccountPaused);
+    // and
+    const result = await lively.pausedOf(accounts[9]);
+    assert.isNotOk(result);
+  });
 
-        // and
-        let result = await lively.pausedOf(accounts[9])
-        assert.isOk(result)
-    })
+  it("Should any one could not unpause an account", async () => {
+    // given
+    const isAccountPaused = await lively.pausedOf(accounts[9]);
 
-    it('Should CONSENSUS_ROLE unpause an account', async() => {
+    // when
+    try {
+      await lively.unpause(accounts[9], { from: accounts[5] });
+    } catch (error) {
+      // console.trace(error)
+    }
 
-        // given
-        const isAccountPaused = await lively.pausedOf(accounts[9])
-        
-        // when 
-        await lively.unpause(accounts[9], {from: accounts[1]})
+    // then
+    assert.isNotOk(isAccountPaused);
 
-        // then
-        assert.isOk(isAccountPaused);
+    // and
+    const result = await lively.pausedOf(accounts[9]);
+    assert.isNotOk(result);
+  });
 
-        // and
-        let result = await lively.pausedOf(accounts[9])
-        assert.isNotOk(result)
-    })
+  it("Should any one could not pause contract", async () => {
+    // given
+    const isContractPaused = await lively.paused();
 
-    it('Should CONSENSUS_ROLE pause contract', async() => {
+    // when
+    try {
+      await lively.pauseAll({ from: accounts[5] });
+    } catch (error) {
+      // console.trace(error)
+    }
 
-        // given
-        const isContractPaused = await lively.paused()
-        
-        // when
-        await lively.pauseAll({from: accounts[1]})
-        
-        // then
-        assert.isNotOk(isContractPaused);
+    // then
+    assert.isNotOk(isContractPaused);
 
-        // and
-        let result = await lively.paused()
-        assert.isOk(result)
-    })
+    // and
+    const result = await lively.paused();
+    assert.isNotOk(result);
+  });
 
-    it('Should CONSENSUS_ROLE unpause contract', async() => {
+  it("Should any one could not unpause contract", async () => {
+    // given
+    const isContractPaused = await lively.paused();
 
-        // given
-        const isContractPaused = await lively.paused()
-        
-        // when
-        await lively.unpauseAll({from: accounts[1]})
+    // when
+    try {
+      await lively.unpauseAll({ from: accounts[5] });
+    } catch (error) {
+      // console.trace(error)
+    }
 
-        // then
-        assert.isOk(isContractPaused);
+    // then
+    assert.isNotOk(isContractPaused);
 
-        // and
-        let result = await lively.paused()
-        assert.isNotOk(result)
-    })
-
-    it('Should any one could not pause an account', async() => {
-
-        // given
-        const isAccountPaused = await lively.pausedOf(accounts[9])
-        
-        // when
-        try { 
-            await lively.pause(accounts[9], {from: accounts[5]})
-        } catch(error) {
-            //console.trace(error)
-        }
-
-        // then
-        assert.isNotOk(isAccountPaused);
-
-        // and
-        let result = await lively.pausedOf(accounts[9])
-        assert.isNotOk(result)
-    })
-
-    it('Should any one could not unpause an account', async() => {
-
-        // given
-        const isAccountPaused = await lively.pausedOf(accounts[9])
-        
-        // when 
-        try {
-            await lively.unpause(accounts[9], {from: accounts[5]})
-        } catch (error) {
-            //console.trace(error)
-        }
-
-        // then
-        assert.isNotOk(isAccountPaused);
-
-        // and
-        let result = await lively.pausedOf(accounts[9])
-        assert.isNotOk(result)
-    })
-
-    it('Should any one could not pause contract', async() => {
-
-        // given
-        const isContractPaused = await lively.paused()
-        
-        // when
-        try {
-            await lively.pauseAll({from: accounts[5]})
-        } catch (error) {
-            //console.trace(error)
-        }
-        
-        // then
-        assert.isNotOk(isContractPaused);
-
-        // and
-        let result = await lively.paused()
-        assert.isNotOk(result)
-    })
-
-    it('Should any one could not unpause contract', async() => {
-
-        // given
-        const isContractPaused = await lively.paused()
-        
-        // when
-        try {
-            await lively.unpauseAll({from: accounts[5]})
-        } catch (error) {
-            //console.trace(error)
-        }
-
-        // then
-        assert.isNotOk(isContractPaused);
-
-        // and
-        let result = await lively.paused()
-        assert.isNotOk(result)
-    })
-})
+    // and
+    const result = await lively.paused();
+    assert.isNotOk(result);
+  });
+});

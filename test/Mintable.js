@@ -1,92 +1,165 @@
 const assert = require("chai").assert;
 
-const LivelyToken = artifacts.require("LivelyToken")
+const LivelyToken = artifacts.require("LivelyToken");
+const RelayContract = artifacts.require("Relay");
 
-const ADMIN_ROLE = web3.utils.keccak256("ADMIN_ROLE")
-const BURNABLE_ROLE = web3.utils.keccak256("BURNABLE_ROLE")
-const CONSENSUS_ROLE = web3.utils.keccak256("CONSENSUS_ROLE")
-const NONE_ROLE = web3.utils.keccak256("NONE_ROLE")
+const PUBLIC_SALE_WALLET = "0x7eA3cFefA2b13e493110EdEd87e2Ba72C115BEc1";
+const decimal = new web3.utils.BN("1000000000000000000");
 
-const PUBLIC_SALE_WALLET = "0x7eA3cFefA2b13e493110EdEd87e2Ba72C115BEc1"
-const decimal = new web3.utils.BN('1000000000000000000')
+contract("Mintable", (accounts) => {
+  let lively;
+  let relay;
 
-contract('Mintable', (accounts) => {
+  before(async () => {
+    lively = await LivelyToken.deployed();
+    relay = await RelayContract.new(lively.address);
 
-    let lively;
+    // init consensus role
+    await lively.firstInitializeConsensusRole(relay.address);
+  });
 
-    before(async() => {
-        lively = await LivelyToken.deployed()
-
-        // init consensus role
-        await lively.firstInitializeConsensusRole(accounts[1]);
+  it("Should CONSENSUS_ROLE mint token when contract pause", async () => {
+    // given
+    const totalSupply = await lively.totalSupply();
+    const balance = await lively.balanceOf(PUBLIC_SALE_WALLET);
+    let requestObj = await lively.pauseAll.request();
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
     });
 
-    it('Should CONSENSUS_ROLE mint token when contract pause', async() => {
-        // given
-        let totalSupply = await lively.totalSupply()
-        let balance = await lively.balanceOf(PUBLIC_SALE_WALLET)
-        await lively.pauseAll({from: accounts[1]})
+    // when
+    requestObj = await lively.mint.request(
+      PUBLIC_SALE_WALLET,
+      balance,
+      totalSupply,
+      1000
+    );
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
-        // when
-        await lively.mint(PUBLIC_SALE_WALLET, balance, totalSupply, 1000, {from: accounts[1]})
+    // then
+    assert.equal(
+      totalSupply.toString(),
+      new web3.utils.BN("1000000000").mul(decimal).toString()
+    );
+    assert.equal(
+      balance.toString(),
+      new web3.utils.BN("500000000").mul(decimal).toString()
+    );
 
-        //then
-        assert.equal(totalSupply.toString(), (new web3.utils.BN('1000000000')).mul(decimal).toString())
-        assert.equal(balance.toString(), (new web3.utils.BN('500000000')).mul(decimal).toString())
+    // and
+    let result = await lively.totalSupply();
+    assert.equal(
+      result.toString(),
+      totalSupply.add(new web3.utils.BN(1000)).toString()
+    );
 
-        // and
-        let result = await lively.totalSupply()
-        assert.equal(result.toString(), totalSupply.add(new web3.utils.BN(1000)).toString())
+    // and
+    result = await lively.balanceOf(PUBLIC_SALE_WALLET);
+    assert.equal(
+      result.toString(),
+      balance.add(new web3.utils.BN(1000)).toString()
+    );
+  });
 
-        // and
-        result = await lively.balanceOf(PUBLIC_SALE_WALLET)
-        assert.equal(result.toString(), balance.add(new web3.utils.BN(1000)).toString())
-    })
-    
-    it('Should CONSENSUS_ROLE could not mint token when contract not pause', async() => {
-        // given
-        let totalSupply = await lively.totalSupply()
-        let balance = await lively.balanceOf(PUBLIC_SALE_WALLET)
-        await lively.unpauseAll({from: accounts[1]})
+  it("Should CONSENSUS_ROLE could not mint token when contract not pause", async () => {
+    // given
+    const totalSupply = await lively.totalSupply();
+    const balance = await lively.balanceOf(PUBLIC_SALE_WALLET);
+    let requestObj = await lively.unpauseAll.request();
+    await web3.eth.sendTransaction({
+      from: accounts[1],
+      to: relay.address,
+      data: requestObj.data,
+    });
 
-        // when
-        try {
-            await lively.mint(PUBLIC_SALE_WALLET, balance, totalSupply, 1000, {from: accounts[1]})
-        } catch(error) {}
+    // when
+    try {
+      requestObj = await lively.mint.request(
+        PUBLIC_SALE_WALLET,
+        balance,
+        totalSupply,
+        1000
+      );
+      await web3.eth.sendTransaction({
+        from: accounts[1],
+        to: relay.address,
+        data: requestObj.data,
+      });
+    } catch (error) {}
 
-        //then
-        assert.equal(totalSupply.toString(), (new web3.utils.BN('1000000000')).mul(decimal).add(new web3.utils.BN('1000')).toString())
-        assert.equal(balance.toString(), (new web3.utils.BN('500000000')).mul(decimal).add(new web3.utils.BN('1000')).toString())
+    // then
+    assert.equal(
+      totalSupply.toString(),
+      new web3.utils.BN("1000000000")
+        .mul(decimal)
+        .add(new web3.utils.BN("1000"))
+        .toString()
+    );
+    assert.equal(
+      balance.toString(),
+      new web3.utils.BN("500000000")
+        .mul(decimal)
+        .add(new web3.utils.BN("1000"))
+        .toString()
+    );
 
-        // and
-        let result = await lively.totalSupply()
-        assert.equal(result.toString(), totalSupply.toString())
+    // and
+    let result = await lively.totalSupply();
+    assert.equal(result.toString(), totalSupply.toString());
 
-        // and
-        result = await lively.balanceOf(PUBLIC_SALE_WALLET)
-        assert.equal(result.toString(), balance.toString())
-    })
-    
-    it('Should ADMIN_ROLE could not mint token', async() => {
-        // given
-        let totalSupply = await lively.totalSupply()
-        let balance = await lively.balanceOf(PUBLIC_SALE_WALLET)
+    // and
+    result = await lively.balanceOf(PUBLIC_SALE_WALLET);
+    assert.equal(result.toString(), balance.toString());
+  });
 
-        // when
-        try {
-            await lively.mint(PUBLIC_SALE_WALLET, balance, totalSupply, 1000, {from: accounts[0]})
-        } catch(error) {}
+  it("Should ADMIN_ROLE could not mint token", async () => {
+    // given
+    const totalSupply = await lively.totalSupply();
+    const balance = await lively.balanceOf(PUBLIC_SALE_WALLET);
 
-        //then
-        assert.equal(totalSupply.toString(), (new web3.utils.BN('1000000000')).mul(decimal).add(new web3.utils.BN('1000')).toString())
-        assert.equal(balance.toString(), (new web3.utils.BN('500000000')).mul(decimal).add(new web3.utils.BN('1000')).toString())
+    // when
+    try {
+      const requestObj = await lively.mint.request(
+        PUBLIC_SALE_WALLET,
+        balance,
+        totalSupply,
+        1000
+      );
+      await web3.eth.sendTransaction({
+        from: accounts[1],
+        to: relay.address,
+        data: requestObj.data,
+      });
+    } catch (error) {}
 
-        // and
-        let result = await lively.totalSupply()
-        assert.equal(result.toString(), totalSupply.toString())
+    // then
+    assert.equal(
+      totalSupply.toString(),
+      new web3.utils.BN("1000000000")
+        .mul(decimal)
+        .add(new web3.utils.BN("1000"))
+        .toString()
+    );
+    assert.equal(
+      balance.toString(),
+      new web3.utils.BN("500000000")
+        .mul(decimal)
+        .add(new web3.utils.BN("1000"))
+        .toString()
+    );
 
-        // and
-        result = await lively.balanceOf(PUBLIC_SALE_WALLET)
-        assert.equal(result.toString(), balance.toString())
-    })
-})
+    // and
+    let result = await lively.totalSupply();
+    assert.equal(result.toString(), totalSupply.toString());
+
+    // and
+    result = await lively.balanceOf(PUBLIC_SALE_WALLET);
+    assert.equal(result.toString(), balance.toString());
+  });
+});

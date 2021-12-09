@@ -7,6 +7,19 @@ pragma solidity 0.8.10;
  * recognized off-chain (via event analysis).
  */
 interface IBurnable {
+    /**
+     * @dev Emitted when the burnFrom of a `amount` for an `account` from caller is set by
+     * a call to {burn}.
+     * `amount` subtracted from the oldBalance of account and oldTotalSupply.
+     * `from` is msg.sender.
+     */
+    event Burn(
+        address indexed from,
+        address indexed account,
+        uint256 oldBalance,
+        uint256 oldTotalSupply,
+        uint256 amount
+    );
 
     /**
      * @dev Destroys `amount` tokens from `account`, deducting from the caller's
@@ -23,23 +36,9 @@ interface IBurnable {
      * `amount`.
      */
     function burn(
-        address account, 
-        uint256 currentBalance, 
-        uint256 currentTotalSupply, 
+        address account,
+        uint256 currentBalance,
+        uint256 currentTotalSupply,
         uint256 amount
     ) external returns (uint256, uint256);
-
-    /**
-     * @dev Emitted when the burnFrom of a `amount` for an `account` from caller is set by 
-     * a call to {burn}. 
-     * `amount` subtracted from the oldBalance of account and oldTotalSupply.
-     * `from` is msg.sender. 
-     */
-    event Burn(
-        address indexed from,
-        address indexed account,
-        uint256 oldBalance, 
-        uint256 oldTotalSupply, 
-        uint256 amount
-    );
 }
