@@ -1,9 +1,18 @@
-const assert = require("chai").assert;
+/* eslint-disable no-unused-expressions */
+const { assert, expect } = require("chai");
 
 const RelayContract = artifacts.require("Relay");
 const LivelyToken = artifacts.require("LivelyToken");
 
 const PUBLIC_SALE_WALLET = "0x7eA3cFefA2b13e493110EdEd87e2Ba72C115BEc1";
+
+const iAccessControlId = "0xba7df352";
+const iBurnableId = "0xde7bf0a2";
+const iMintableId = "0xa647e8ec";
+const iFreezableId = "0x991ebb18";
+const iERC20Id = "0x942e8b22";
+const iERC20SecId = "0xb85502e8";
+const iPausable = "0xe613f82a";
 
 contract("ERC20", (accounts) => {
   let lively;
@@ -224,9 +233,7 @@ contract("ERC20", (accounts) => {
     const accountBalance = await web3.eth.getBalance(accounts[3]);
 
     // when
-    const requestObj = await lively.withdrawContractBalance.request(
-      accounts[3]
-    );
+    const requestObj = await lively.withdrawalBalance.request(accounts[3]);
     await web3.eth.sendTransaction({
       from: accounts[1],
       to: relay.address,
@@ -245,5 +252,15 @@ contract("ERC20", (accounts) => {
         new web3.utils.BN(balance)
       )
     );
+  });
+
+  it("Should support IAccessControl, IBurnable, IERC20, IERC20SEC, IFreezable, IMintable, IPauseable", async () => {
+    expect(await lively.supportsInterface(iAccessControlId)).to.be.true;
+    expect(await lively.supportsInterface(iBurnableId)).to.be.true;
+    expect(await lively.supportsInterface(iMintableId)).to.be.true;
+    expect(await lively.supportsInterface(iFreezableId)).to.be.true;
+    expect(await lively.supportsInterface(iERC20Id)).to.be.true;
+    expect(await lively.supportsInterface(iERC20SecId)).to.be.true;
+    expect(await lively.supportsInterface(iPausable)).to.be.true;
   });
 });

@@ -6,7 +6,6 @@ const LivelyToken = artifacts.require("LivelyToken");
 const ADMIN_ROLE = web3.utils.keccak256("ADMIN_ROLE");
 const BURNABLE_ROLE = web3.utils.keccak256("BURNABLE_ROLE");
 const CONSENSUS_ROLE = web3.utils.keccak256("CONSENSUS_ROLE");
-const NONE_ROLE = web3.utils.keccak256("NONE_ROLE");
 
 contract("AccessControl", (accounts) => {
   let lively;
@@ -287,15 +286,11 @@ contract("AccessControl", (accounts) => {
     assert.isOk(isBurnableRoleExist, "Burnable role must has an account");
 
     // and
-    let result = await lively.hasRole(BURNABLE_ROLE, accounts[2]);
+    const result = await lively.hasRole(BURNABLE_ROLE, accounts[2]);
     assert.isNotOk(
       result,
       "Burnable role must has not an account after revoke role"
     );
-
-    // and
-    result = await lively.hasRole(NONE_ROLE, accounts[2]);
-    assert.isOk(result, "accounts[2] must has a NONE_ROLE");
   });
 
   it("Should CONSENSUS_ROLE could not revoke role from itself", async () => {
@@ -322,10 +317,6 @@ contract("AccessControl", (accounts) => {
 
     // then
     assert.isOk(isConsensusRoleExist, "Consensus role must has an account");
-
-    // and
-    const result = await lively.hasRole(NONE_ROLE, relay.address);
-    assert.isNotOk(result, "Consensus role could not revoke itself");
   });
 
   it("Should CONSENSUS_ROLE can grantRole to newAccount", async () => {
@@ -395,17 +386,7 @@ contract("AccessControl", (accounts) => {
     assert.isOk(isAdminRoleExist, "Admin role must has an account");
 
     // and
-    let result = await lively.hasRole(ADMIN_ROLE, accounts[5]);
+    const result = await lively.hasRole(ADMIN_ROLE, accounts[5]);
     assert.isNotOk(result, "Admin role revoke from accounts[5]");
-
-    result = await lively.hasRole(NONE_ROLE, accounts[5]);
-    assert.isOk(result, "accounts[5] set to NONE_ROLE");
   });
-
-  // it('Should hasRole raise exception when address invalid', () => {
-
-  //     lively.hasRole(ADMIN_ROLE, lively.address).catch(error =>  error)
-  //     // // when
-  //     // truffleAssert.reverts(await lively.hasRole(ADMIN_ROLE, lively.address), '')
-  // })
 });

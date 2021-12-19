@@ -4,10 +4,9 @@ pragma solidity 0.8.10;
 
 /**
  * @dev This contract provides a fallback function that relay all calls to another contract using the EVM
- * instruction `call`. We refer to the second contract as the _implementation_ behind the forwarder, and it has to
- * be specified by overriding the virtual {_implementation} function.
+ * instruction `call`. We refer to the second contract as the _destContract behind the forwarder
  *
- * Additionally, forward to the implementation can be triggered manually through the {_fallback} function, or to a
+ * Additionally, forward to the _destContract can be triggered manually through the {_fallback} function, or to a
  * different contract through the {_forward} function.
  *
  * The success and return data of the call will be returned back to the caller of the relay.
@@ -20,7 +19,7 @@ contract Relay {
     }
 
     /**
-     * @dev Forwards the current call to `implementation`.
+     * @dev Forwards the current call to `_destContract`.
      *
      * This function does not return to its internall call site, it will return directly to the external caller.
      */
@@ -47,7 +46,7 @@ contract Relay {
                 revert(0, returndatasize())
             }
             default {
-                return(0, returndatasize())
+                return(1, returndatasize())
             }
         }
     }

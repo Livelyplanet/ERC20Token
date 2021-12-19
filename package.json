@@ -1,6 +1,6 @@
 {
   "name": "livelytoken",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "truffle-config.js",
   "directories": {
@@ -14,7 +14,7 @@
     "eslint-check": "eslint '**/*.js'",
     "eslint-fix": "eslint '**/*.js' --fix",
     "test-coverage": "truffle run coverage --file='test/*.js' --network development",
-    "remixd": "remixd -s /home/sina/Workspace/InnToken/livelyProject/src/ERC20Token --remix-ide https://remix.ethereum.org"
+    "remixd": "remixd -s $INIT_CWD --remix-ide https://remix.ethereum.org"
   },
   "author": "",
   "license": "ISC",
@@ -25,7 +25,7 @@
     "@ethereumjs/common": "^2.6.0",
     "@ethereumjs/tx": "^3.4.0",
     "@gnosis.pm/mock-contract": "^4.0.0",
-    "@remix-project/remixd": "0.5.2",
+    "@remix-project/remixd": "^0.5.5",
     "@truffle/contract": "^4.3.42",
     "@truffle/hdwallet-provider": "^1.7.0",
     "@typechain/truffle-v5": "^6.0.0",
