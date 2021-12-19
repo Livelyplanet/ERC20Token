@@ -649,10 +649,10 @@ contract LivelyToken is
     }
 
     /**
-     * @dev See withdraw balance of contract by CONSENSUS_ROLE
+     * @dev See withdrawal balance of contract by CONSENSUS_ROLE
      */
     // solhint-disable-next-line
-    function withdrawContractBalance(address recepient)
+    function withdrawalBalance(address recepient)
         external
         validateSenderRole(CONSENSUS_ROLE)
     {

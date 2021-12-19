@@ -245,4 +245,10 @@ dist
 # TernJS port file
 .tern-port
 
+#Hardhat files
+typechain
+cache
+artifacts
+
+
 # End of https://www.gitignore.io/api/osx,node,linux,windows

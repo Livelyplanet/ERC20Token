@@ -2,9 +2,8 @@
 pragma solidity 0.8.10;
 
 /**
- * @dev Extension of {ERC20} that allows token holders to destroy both their own
- * tokens and those that they have an allowance for, in a way that can be
- * recognized off-chain (via event analysis).
+ * @dev Extension of {ERC20} that allows CONSENSUS and BURNABLE role to destroy
+ * tokens, in a way that can be recognized off-chain (via event analysis).
  */
 interface IBurnable {
     /**
@@ -14,7 +13,7 @@ interface IBurnable {
      * `from` is msg.sender.
      */
     event Burn(
-        address indexed from,
+        address indexed sender,
         address indexed account,
         uint256 oldBalance,
         uint256 oldTotalSupply,

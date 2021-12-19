@@ -22,7 +22,6 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     bytes32 public constant CONSENSUS_ROLE = keccak256("CONSENSUS_ROLE");
     bytes32 public constant BURNABLE_ROLE = keccak256("BURNABLE_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant NONE_ROLE = keccak256("NONE_ROLE");
 
     bool private _isConsenusRoleInitialized;
     bool private _isBurnableRoleInitialized;
@@ -54,12 +53,12 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     error IllegalRoleError();
 
     /**
-     * @dev error DublicateAddressRoleError
+     * @dev error DuplicateAddressRoleError
      */
-    error DublicateAddressRoleError(address account);
+    error DuplicateAddressRoleError(address account);
 
     /**
-     * @dev Grants `ADMIN_ROLE, `BURNABLE_ROLE` to the
+     * @dev Grants `ADMIN_ROLE to the
      * account that deploys the contract.
      */
     constructor() {
@@ -193,7 +192,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
     function _firstInitializeConsensusRole(address account) internal {
         if (_isConsenusRoleInitialized) revert ForbiddenError(msg.sender);
         if (!_isContract(account)) revert IllegalAddressError(account);
-        if (_roles[account] != 0) revert DublicateAddressRoleError(account);
+        if (_roles[account] != 0) revert DuplicateAddressRoleError(account);
         _isConsenusRoleInitialized = true;
         _roles[account] = CONSENSUS_ROLE;
     }
@@ -280,14 +279,13 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         if (role == CONSENSUS_ROLE && !_isContract(newAccount))
             revert IllegalAddressError(newAccount);
         if (_roles[newAccount] != 0)
-            revert DublicateAddressRoleError(newAccount);
+            revert DuplicateAddressRoleError(newAccount);
 
         if (role == BURNABLE_ROLE && !_isBurnableRoleInitialized) {
             _isBurnableRoleInitialized = true;
         } else {
             bytes32 roleInfo = _roles[currentAccount];
-            if (roleInfo == 0 && roleInfo != NONE_ROLE)
-                revert AddressNotFoundError(currentAccount);
+            if (roleInfo == 0) revert AddressNotFoundError(currentAccount);
             if (roleInfo != role) revert IllegalRoleError();
             delete _roles[currentAccount];
         }
@@ -303,7 +301,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         if (roleInfo == 0) revert AddressNotFoundError(currentAccount);
         if (roleInfo != role) revert IllegalRoleError();
 
-        _roles[currentAccount] = NONE_ROLE;
+        delete _roles[currentAccount];
         emit RoleRevoked(role, msg.sender, currentAccount);
     }
 }
