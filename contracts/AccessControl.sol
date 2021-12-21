@@ -62,7 +62,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
      * account that deploys the contract.
      */
     constructor() {
-        _setupRole(ADMIN_ROLE, msg.sender);
+        _roles[msg.sender] = ADMIN_ROLE;
         _isConsenusRoleInitialized = false;
         _isBurnableRoleInitialized = false;
     }
@@ -159,7 +159,22 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         validateSenderRole(CONSENSUS_ROLE)
         validateAddresses(currentAccount, newAccount)
     {
-        _grantRole(role, currentAccount, newAccount);
+        if (role == CONSENSUS_ROLE && !_isContract(newAccount))
+            revert IllegalAddressError(newAccount);
+        if (_roles[newAccount] != 0)
+            revert DuplicateAddressRoleError(newAccount);
+
+        if (role == BURNABLE_ROLE && !_isBurnableRoleInitialized) {
+            _isBurnableRoleInitialized = true;
+        } else {
+            bytes32 roleInfo = _roles[currentAccount];
+            if (roleInfo == 0) revert AddressNotFoundError(currentAccount);
+            if (roleInfo != role) revert IllegalRoleError();
+            delete _roles[currentAccount];
+        }
+
+        _roles[newAccount] = role;
+        emit RoleGranted(role, msg.sender, newAccount, currentAccount);
     }
 
     /**
@@ -176,7 +191,14 @@ abstract contract AccessControl is IAccessControl, ERC165 {
         override
         validateSenderRole(CONSENSUS_ROLE)
     {
-        _revokeRole(role, account);
+        if (role == CONSENSUS_ROLE) revert ForbiddenError(account);
+        bytes32 roleInfo = _roles[account];
+
+        if (roleInfo == 0) revert AddressNotFoundError(account);
+        if (roleInfo != role) revert IllegalRoleError();
+
+        delete _roles[account];
+        emit RoleRevoked(role, msg.sender, account);
     }
 
     /**
@@ -247,61 +269,7 @@ abstract contract AccessControl is IAccessControl, ERC165 {
 
     /* solhint-enable */
 
-    /**
-     * @dev Grants `role` to `account`.
-     *
-     * If `account` had not been already granted `role`, emits a {RoleGranted}
-     * event. Note that unlike {grantRole}, this function doesn't perform any
-     * checks on the calling account.
-     *
-     * [WARNING]
-     * ====
-     * This function should only be called from the constructor when setting
-     * up the initial roles for the system.
-     *
-     * Using this function in any other way is effectively circumventing the admin
-     * system imposed by {AccessControl}.
-     * ====
-     */
-    function _setupRole(bytes32 role, address account) internal {
-        _roles[account] = role;
-    }
-
     function _getRole(address account) internal view returns (bytes32) {
         return _roles[account];
-    }
-
-    function _grantRole(
-        bytes32 role,
-        address currentAccount,
-        address newAccount
-    ) private {
-        if (role == CONSENSUS_ROLE && !_isContract(newAccount))
-            revert IllegalAddressError(newAccount);
-        if (_roles[newAccount] != 0)
-            revert DuplicateAddressRoleError(newAccount);
-
-        if (role == BURNABLE_ROLE && !_isBurnableRoleInitialized) {
-            _isBurnableRoleInitialized = true;
-        } else {
-            bytes32 roleInfo = _roles[currentAccount];
-            if (roleInfo == 0) revert AddressNotFoundError(currentAccount);
-            if (roleInfo != role) revert IllegalRoleError();
-            delete _roles[currentAccount];
-        }
-
-        _roles[newAccount] = role;
-        emit RoleGranted(role, msg.sender, newAccount, currentAccount);
-    }
-
-    function _revokeRole(bytes32 role, address currentAccount) private {
-        if (role == CONSENSUS_ROLE) revert ForbiddenError(currentAccount);
-        bytes32 roleInfo = _roles[currentAccount];
-
-        if (roleInfo == 0) revert AddressNotFoundError(currentAccount);
-        if (roleInfo != role) revert IllegalRoleError();
-
-        delete _roles[currentAccount];
-        emit RoleRevoked(role, msg.sender, currentAccount);
     }
 }
