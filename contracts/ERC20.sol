@@ -30,8 +30,6 @@ contract LivelyToken is
     mapping(address => uint256) private _freezes;
 
     uint256 private _totalSupply;
-    string private _name;
-    string private _symbol;
 
     /**
      * @dev error IllegalArgumentError
@@ -68,8 +66,6 @@ contract LivelyToken is
      * construction.
      */
     constructor() {
-        _name = "Lively";
-        _symbol = "LVL";
         _totalSupply = 1_000_000_000 * 10**18;
         _balances[PUBLIC_SALE_WALLET_ADDRESS] = 500_000_000 * 10**18; // equivalent 50% total supply
         _balances[FOUNDING_TEAM_WALLET_ADDRESS] = 200_000_000 * 10**18; // equivalent 20% total supply
@@ -113,16 +109,16 @@ contract LivelyToken is
     /**
      * @dev Returns the name of the token.
      */
-    function name() external view override returns (string memory) {
-        return _name;
+    function name() external pure override returns (string memory) {
+        return "Lively";
     }
 
     /**
      * @dev Returns the symbol of the token, usually a shorter version of the
      * name.
      */
-    function symbol() external view override returns (string memory) {
-        return _symbol;
+    function symbol() external pure override returns (string memory) {
+        return "LVL";
     }
 
     /**
