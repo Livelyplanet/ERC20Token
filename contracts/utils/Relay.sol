@@ -46,7 +46,7 @@ contract Relay {
                 revert(0, returndatasize())
             }
             default {
-                return(1, returndatasize())
+                return(0, returndatasize())
             }
         }
     }
